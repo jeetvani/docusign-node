@@ -26,6 +26,11 @@ app.post('/', (request, response) => {
   response.send("Hello World");
 });
 
+app.get('/', (request, response) => {
+  response.send("Hello World");
+}
+)
+
 function getEnvelopesApi(request) {
   let dsApiClient = new docusign.ApiClient();
   dsApiClient.setBasePath(process.env.BASE_PATH);
