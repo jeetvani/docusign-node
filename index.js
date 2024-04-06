@@ -19,12 +19,20 @@ app.use(session({
 app.use(express.json());
 
 
-app.post('/', (request, response) => {
+app.post('/webhookTest', (request, response) => {
   console.log("REQUEST FROM WEBHOOK");
   console.log(request.body);
   console.log("REQUEST FROM WEBHOOK");
   response.send("Hello World");
 });
+
+app.get('/webhookTest', (request, response) => {
+  console.log("webhook test");
+  console.log(request.body);
+  response.send("webhook test");
+
+}
+);
 
 app.get('/', (request, response) => {
   response.send("Hello World");
@@ -338,7 +346,8 @@ app.post('/initiateSignature', async (request, response) => {
 
       let results = await envelopesApi.createEnvelope(
         process.env.ACCOUNT_ID, { envelopeDefinition: envelope });
-      console.log("envelope results ", results);
+      console.log("envelope results ", results.envelopeId);
+      const envelopeId = results.envelopeId
       // Create the recipient view, the Signing Ceremony
       let viewRequest = makeRecipientViewRequest(name1, email1);
       results = await envelopesApi.createRecipientView(process.env.ACCOUNT_ID, results.envelopeId,
@@ -361,6 +370,22 @@ app.post('/initiateSignature', async (request, response) => {
         }
       };
       await dynamodb.updateItem(updateParams).promise();
+
+      const updateEnvelopId = {
+        TableName: "PendingICPO",
+        Key: {
+          "LOIid": { S: LOIid }
+        },
+        UpdateExpression: "set #envelopId = :envelopId",
+        ExpressionAttributeNames: {
+          "#envelopId": "envelopId"
+        },
+        ExpressionAttributeValues: {
+          ":envelopId": { S: envelopeId }
+        }
+      };
+      await dynamodb.updateItem(updateEnvelopId).promise();
+
 
 
       return response.send({
@@ -386,26 +411,12 @@ app.post('/initiateSignature', async (request, response) => {
 
 
   return
-  // const name = "Rohit Singh";
-  // const company = "Test Company";
-  // await checkToken(request);
-  // let envelopesApi = getEnvelopesApi(request);
-  // let envelope = makeEnvelope(name, request.body.email, company);
 
-  // let results = await envelopesApi.createEnvelope(
-  //   process.env.ACCOUNT_ID, { envelopeDefinition: envelope });
-  // console.log("envelope results ", results);
-  // // Create the recipient view, the Signing Ceremony
-  // let viewRequest = makeRecipientViewRequest(name, email);
-  // results = await envelopesApi.createRecipientView(process.env.ACCOUNT_ID, results.envelopeId,
-  //   { recipientViewRequest: viewRequest });
-
-  // response.send({ url: results.url });
 
 
 });
 
-// https://account-d.docusign.com/oauth/auth?response_type=code&scope=signature%20impersonation&client_id=8f9fee83-9a23-4c41-8166-51447dfddc96&redirect_uri=http://localhost:3000/
+// https://account-d.docusign.com/oauth/auth?response_type=code&scope=signature%20impersonation&client_id=8f9fee83-9a23-4c41-8166-51447dfddc96&redirect_uri=https://red-average-springbok.cyclic.app
 
 app.listen(3000, () => {
   console.log("server has started", process.env.USER_ID);
