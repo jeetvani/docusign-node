@@ -415,7 +415,7 @@ app.post('/initiateSignature', async (request, response) => {
 });
 
 
-app.post('/webhook', (request, response) => {
+app.post('/webhook', async (request, response) => {
   // console.log("webhook called");
   // console.log("WEBHOOK BODY", request.body);
 
@@ -438,7 +438,7 @@ app.post('/webhook', (request, response) => {
         ":envelopId": { S: envelopeId }
       }
     };
-    dynamodb.scan(params, (err, data) => {
+    await dynamodb.scan(params, (err, data) => {
       if (err) {
         console.error("Unable to scan the table. Error JSON:", JSON.stringify(err, null, 2));
       } else {
