@@ -481,7 +481,7 @@ app.post('/webhook', (request, response) => {
 
 
           console.log("THE CONTRACT IS SIGNED BY " + item.signedBy + " PARTIES ")
-          if ((item.signedBy) == 1) {
+          if (parseInt(item.signedBy) == 1) {
             console.log("THE CONTRACT IS SIGNED BY BOTH PARTIES")
 
             //get loi data from table LOI-hehdmsyuubfkbfai6tdtjjoxiq-staging
