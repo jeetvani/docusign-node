@@ -143,6 +143,11 @@ app.post('/initiateSignature', async (request, response) => {
     response.send("LOIid not found");
     return
   }
+  if (findUsingLOIid.contractSent) {
+    return response.send({
+      message: "Contract is already sent for signature"
+    });
+  }
   if (findUsingLOIid) {
 
     if (findUsingLOIid.sellerApproved && findUsingLOIid.buyerApproved) {
