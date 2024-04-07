@@ -192,7 +192,7 @@ app.post('/initiateSignature', async (request, response) => {
 
       const company = "Test Company";
       const name1 = "Jeet Vani"
-      const email1 = "jackyairdayan@gmail.com";
+      const email1 = "incognitoconqueror@gmail.com";
       const name2 = "Jeet Vani";
       const email2 = "copyrightjeet@gmail.com";
       await checkToken(request);
@@ -344,19 +344,19 @@ app.post('/initiateSignature', async (request, response) => {
           "LOIid": { S: LOIid }
         },
         //also set signedBy to buyer
-        UpdateExpression: "set #contractSent = :contractSent  , #signedBy = :signedBy , #envelopId = :envelopId,#envelopType = :envelopType , signedBy = :signedBy",
+        UpdateExpression: "set #contractSent = :contractSent  , #signedBy = :signedBy , #envelopId = :envelopId,#envelopType = :envelopType ",
         ExpressionAttributeNames: {
           "#contractSent": "contractSent",
           "#signedBy": "signedBy",
           "#envelopId": "envelopId",
           "#envelopType": "envelopType",
-          "#signedBy": "signedBy"
+
 
 
         },
         ExpressionAttributeValues: {
           ":contractSent": { S: "true" }
-          , ":signedBy": { S: "buyer" }
+
           , ":envelopId": { S: envelopeId },
           ":envelopType": { S: "contract" },
           ":signedBy": { S: "0" }
@@ -416,8 +416,101 @@ app.post('/initiateSignature', async (request, response) => {
 
 
 app.post('/webhook', (request, response) => {
-  console.log("webhook called");
+  // console.log("webhook called");
+  // console.log("WEBHOOK BODY", request.body);
+
+  // if webhook event is recipient-completed
+  const webhookEvent = request.body.event;
+  console.log("webhookEvent", webhookEvent);
+  if (webhookEvent == "recipient-completed") {
+    console.log("Recipient completed event");
+
+    const envelopeId = request.body.data.envelopeId;
+    //find in pendingICPO table using envelopeId
+    const dynamodb = new awsSdk.DynamoDB()
+    const params = {
+      TableName: "PendingICPO",
+      FilterExpression: "#envelopId = :envelopId",
+      ExpressionAttributeNames: {
+        "#envelopId": "envelopId"
+      },
+      ExpressionAttributeValues: {
+        ":envelopId": { S: envelopeId }
+      }
+    };
+    dynamodb.scan(params, (err, data) => {
+      if (err) {
+        console.error("Unable to scan the table. Error JSON:", JSON.stringify(err, null, 2));
+      } else {
+        console.log("Scan succeeded.");
+        console.log(data);
+        const finalResult = data ? data.Items.map((item) => { return AWS.DynamoDB.Converter.unmarshall(item) }) : [];
+        console.log(finalResult);
+        if (finalResult.length > 0) {
+          const item = finalResult[0];
+          console.log(item);
+          //update dynamodb PendingICPO table
+          const updateParams = {
+            TableName: "PendingICPO",
+            Key: {
+              "LOIid": { S: item.LOIid }
+            },
+            //also set signedBy to buyer
+            UpdateExpression: "set #signedBy = :signedBy",
+            ExpressionAttributeNames: {
+              "#signedBy": "signedBy"
+            },
+
+            //increase the signedBy value by 1
+            ExpressionAttributeValues: {
+              ":signedBy": {
+                S: (parseInt(item.signedBy) + 1).toString()
+              }
+            }
+          };
+          const updateIt = dynamodb.updateItem(updateParams, (err, data) => {
+            if (err) {
+              console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
+            } else {
+              console.log("UpdateItem succeeded:", data);
+            }
+          });
+
+          //if signed value is 2 then create a new item in Payments table
+
+
+
+          console.log("THE CONTRACT IS SIGNED BY " + item.signedBy + " PARTIES ")
+          if (parseInt(item.signedBy) == 1) {
+            console.log("THE CONTRACT IS SIGNED BY BOTH PARTIES")
+            const params = {
+              TableName: "Payments",
+              Item: {
+                "LOIid": { S: item.LOIid },
+                "buyerID": { S: "buyerId" },
+                "fuelingvendorID": { S: "buyerid" },
+                "amount": { S: "price" },
+                "paid": { S: "0" },
+                "downPayment": { S: "price"},
+              }
+            };
+            dynamodb.putItem(params, (err, data) => {
+              if (err) {
+                console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+              } else {
+                console.log("NEW PAYMENT ITEM ADDED")
+                console.log("Added item:", JSON.stringify(data, null, 2));
+              }
+            });
+          }
+        }
+      }
+    });
+
+    return response.send("Webhook was called  for recipient_completed event");
+  }
   response.send("webhook called");
+
 });
 
 // https://account-d.docusign.com/oauth/auth?response_type=code&scope=signature%20impersonation&client_id=8f9fee83-9a23-4c41-8166-51447dfddc96&redirect_uri=https://red-average-springbok.cyclic.app
