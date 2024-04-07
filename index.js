@@ -18,27 +18,6 @@ app.use(session({
 
 app.use(express.json());
 
-
-app.post('/webhookTest', (request, response) => {
-  console.log("REQUEST FROM WEBHOOK");
-  console.log(request.body);
-  console.log("REQUEST FROM WEBHOOK");
-  response.send("Hello World");
-});
-
-app.get('/webhookTest', (request, response) => {
-  console.log("webhook test");
-  console.log(request.body);
-  response.send("webhook test");
-
-}
-);
-
-app.get('/', (request, response) => {
-  response.send("Hello World");
-}
-)
-
 function getEnvelopesApi(request) {
   let dsApiClient = new docusign.ApiClient();
   dsApiClient.setBasePath(process.env.BASE_PATH);
@@ -46,46 +25,53 @@ function getEnvelopesApi(request) {
   return new docusign.EnvelopesApi(dsApiClient);
 }
 
-function makeEnvelope({ name1, email1, company, name2, email2, tabs }) {
+function makeEnvelope(names, emails, tabsArray) {
   let env = new docusign.EnvelopeDefinition();
   const expirationDate = new Date();
   expirationDate.setMinutes(expirationDate.getMinutes() + 10); // Set expiration to 10 minutes from now
 
   env.expireAfter = expirationDate.toISOString();
-  console.log("expirationDate")
+  console.log("expirationDate");
   console.log(env.expireAfter);
-  console.log("expirationDate")
+  console.log("expirationDate");
   env.emailSubject = "Please sign this document";
   env.templateId = process.env.TEMPLATE_ID;
-  let text = docusign.Text.constructFromObject({
-    tabLabel: "company_name", value: company
-  });
+  env.recipients = new docusign.Recipients();
 
-  // Pull together the existing and new tabs in a Tabs object:
-
-
-  let signer1 = docusign.TemplateRole.constructFromObject({
-    email: email1,
-    name: name1,
-    tabs: tabs,
-
-    roleName: 'Applicant'
-  });
-  let signer2 = docusign.TemplateRole.constructFromObject({
-    email: email2,
-    name: name2,
+  env.templateRoles = [{
+    email: emails[0],
+    name: names[0],
     roleName: 'Applicant',
-    tabs: tabs,
+    tabs: tabsArray[0], // Provide tabs for the current recipient
+  }, {
+    email: emails[1],
+    name: names[1],
+    roleName: 'Applicant2',
+    tabs: tabsArray[1], // Provide tabs for the current recipient
+  }];
+  console.log(JSON.stringify(env.templateRoles));
+  // Initialize an array to hold template roles
+  // const templateRoles = [];
 
-  });
+  // // Loop through names, emails, and tabsArray
+  // for (let i = 0; i < names.length && i < emails.length && i < tabsArray.length; i++) {
+  //   // Construct a template role for each recipient
+  //   const signer = docusign.TemplateRole.constructFromObject({
+  //     email: emails[i],
+  //     name: names[i],
+  //     roleName: 'Applicant',
+  //     tabs: tabsArray[i], // Provide tabs for the current recipient
+  //   });
+  //   // Push the template role to the array
+  //   templateRoles.push(signer);
+  // }
 
-  env.templateRoles = [signer1, signer2];
-
-
+  //env.templateRoles = templateRoles;
   env.status = "sent";
 
   return env;
 }
+
 
 function makeRecipientViewRequest(name, email) {
 
@@ -206,12 +192,11 @@ app.post('/initiateSignature', async (request, response) => {
 
       const company = "Test Company";
       const name1 = "Jeet Vani"
-      const email1 = "jeetvani171@gmail.com";
-      const name2 = "Jeet Vani 2";
+      const email1 = "jackyairdayan@gmail.com";
+      const name2 = "Jeet Vani";
       const email2 = "copyrightjeet@gmail.com";
       await checkToken(request);
       let tabs = docusign.Tabs.constructFromObject({
-
         textTabs: [
           {
             tabLabel: "vendor_id",
@@ -333,19 +318,16 @@ app.post('/initiateSignature', async (request, response) => {
           }
         ],
       });
-      let envelopesApi = getEnvelopesApi(request);
-      let envelope = makeEnvelope({
-        company,
-        name1,
-        email1,
-        name2,
-        email2,
-        tabs
 
-      });
+
+      let envelopesApi = getEnvelopesApi(request);
+      let envelope = makeEnvelope([name1, name2], [email1, email2], [tabs, tabs]);
 
       let results = await envelopesApi.createEnvelope(
         process.env.ACCOUNT_ID, { envelopeDefinition: envelope });
+
+
+
       console.log("envelope results ", results.envelopeId);
       const envelopeId = results.envelopeId
       // Create the recipient view, the Signing Ceremony
@@ -361,15 +343,31 @@ app.post('/initiateSignature', async (request, response) => {
         Key: {
           "LOIid": { S: LOIid }
         },
-        UpdateExpression: "set #contractSent = :contractSent",
+        //also set signedBy to buyer
+        UpdateExpression: "set #contractSent = :contractSent  , #signedBy = :signedBy , #envelopId = :envelopId,#envelopType = :envelopType , signedBy = :signedBy",
         ExpressionAttributeNames: {
-          "#contractSent": "contractSent"
+          "#contractSent": "contractSent",
+          "#signedBy": "signedBy",
+          "#envelopId": "envelopId",
+          "#envelopType": "envelopType",
+          "#signedBy": "signedBy"
+
+
         },
         ExpressionAttributeValues: {
           ":contractSent": { S: "true" }
+          , ":signedBy": { S: "buyer" }
+          , ":envelopId": { S: envelopeId },
+          ":envelopType": { S: "contract" },
+          ":signedBy": { S: "0" }
+
         }
       };
+
+
+
       await dynamodb.updateItem(updateParams).promise();
+
 
       const updateEnvelopId = {
         TableName: "PendingICPO",
@@ -416,6 +414,12 @@ app.post('/initiateSignature', async (request, response) => {
 
 });
 
+
+app.post('/webhook', (request, response) => {
+  console.log("webhook called");
+  response.send("webhook called");
+});
+
 // https://account-d.docusign.com/oauth/auth?response_type=code&scope=signature%20impersonation&client_id=8f9fee83-9a23-4c41-8166-51447dfddc96&redirect_uri=https://red-average-springbok.cyclic.app
 
 app.listen(3000, () => {
@@ -424,11 +428,3 @@ app.listen(3000, () => {
 
 
 
-
-
-app.get('/webhookTest', (request, response) => {
-  console.log("webhook test");
-  console.log(request.body);
-  response.send("webhook test");
-
-});
