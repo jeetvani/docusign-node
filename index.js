@@ -483,25 +483,47 @@ app.post('/webhook', (request, response) => {
           console.log("THE CONTRACT IS SIGNED BY " + item.signedBy + " PARTIES ")
           if (parseInt(item.signedBy) == 1) {
             console.log("THE CONTRACT IS SIGNED BY BOTH PARTIES")
-            const params = {
-              TableName: "Payments",
-              Item: {
-                "LOIid": { S: item.LOIid },
-                "buyerID": { S: "buyerId" },
-                "fuelingvendorID": { S: "buyerid" },
-                "amount": { S: "price" },
-                "paid": { S: "0" },
-                "downPayment": { S: "price"},
+
+            //get loi data from table LOI-hehdmsyuubfkbfai6tdtjjoxiq-staging
+            const LOIid = item.LOIid;
+            const findingParams = {
+              TableName: "LOI-hehdmsyuubfkbfai6tdtjjoxiq-staging",
+              Key: {
+                "id": { S: LOIid }
               }
             };
-            dynamodb.putItem(params, (err, data) => {
+            dynamodb.getItem(findingParams, (err, data) => {
               if (err) {
-                console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+                console.error("Unable to get item. Error JSON:", JSON.stringify(err, null, 2));
               } else {
-                console.log("NEW PAYMENT ITEM ADDED")
-                console.log("Added item:", JSON.stringify(data, null, 2));
+                console.log("GetItem succeeded:", data);
+                const loiData = data ? AWS.DynamoDB.Converter.unmarshall(data.Item) : [];
+                console.log(loiData);
+
+                const params = {
+                  TableName: "Payments",
+                  Item: {
+                    "LOIid": { S: LOIid },
+                    "buyerID": { S: loiData.buyerID },
+                    "fuelingvendorID": { S: loiData.fuelingvendorID },
+                    "amount": { S: JSON.stringify(loiData.price) },
+                    "paid": { S: "0" },
+                    "downPayment": { S: JSON.stringify(parseFloat(loiData.price) * 0.1) },
+                  }
+                };
+                dynamodb.putItem(params, (err, data) => {
+                  if (err) {
+                    console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+                  } else {
+                    console.log("NEW PAYMENT ITEM ADDED")
+                    console.log("Added item:", JSON.stringify(data, null, 2));
+                  }
+                });
               }
-            });
+            }
+            );
+
+
           }
         }
       }
