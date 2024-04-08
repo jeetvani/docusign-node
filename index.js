@@ -41,12 +41,12 @@ function makeEnvelope(names, emails, tabsArray) {
   env.templateRoles = [{
     email: emails[0],
     name: names[0],
-    roleName: 'Applicant',
+    roleName: 'seller',
     tabs: tabsArray[0], // Provide tabs for the current recipient
   }, {
     email: emails[1],
     name: names[1],
-    roleName: 'Applicant2',
+    roleName: 'buyer',
     tabs: tabsArray[1], // Provide tabs for the current recipient
   }];
   console.log(JSON.stringify(env.templateRoles));
