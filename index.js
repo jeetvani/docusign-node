@@ -317,7 +317,14 @@ app.post('/initiateSignature', async (request, response) => {
             tabLabel: "buyer_bank_tel",
             value: "buyer_bank_tel",
             locked: "true"
-          }, {
+          },
+          {
+            tabLabel: "buyer_bank_aba",
+            value: "buyer_bank_aba",
+            locked: "true"
+          },
+
+          {
             tabLabel: "buyer_bank_email",
             value: "buyer_bank_email",
             locked: "true"
