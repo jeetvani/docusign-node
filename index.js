@@ -208,11 +208,17 @@ app.post('/initiateSignature', async (request, response) => {
             value: fuelingvendorID,
             locked: "true"
           }, {
+            tabLabel: "contract_duration",
+            value: "contract_duration",
+            locked: "true"
+
+          },
+          {
             tabLabel: "vendor_country",
             value: finalResult.origin,
             locked: "true"
           }, {
-            tabLabel: "company_name",
+            tabLabel: "buyer_company",
             value: company,
             locked: "true"
           }, {
@@ -251,7 +257,13 @@ app.post('/initiateSignature', async (request, response) => {
             tabLabel: "seller_account_number",
             value: "seller_account_number",
             locked: "true"
-          }, {
+          },
+          {
+            tabLabel: "seller_aba",
+            value: "seller_aba",
+            locked: "true"
+          },
+          {
             tabLabel: "seller_account_name",
             value: "seller_account_name",
             locked: "true"
