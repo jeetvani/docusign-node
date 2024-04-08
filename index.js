@@ -34,7 +34,7 @@ function makeEnvelope(names, emails, tabsArray) {
   console.log("expirationDate");
   console.log(env.expireAfter);
   console.log("expirationDate");
-  env.emailSubject = "Please sign this document";
+  env.emailSubject = "Fuel Go Contract";
   env.templateId = process.env.TEMPLATE_ID;
   env.recipients = new docusign.Recipients();
 
