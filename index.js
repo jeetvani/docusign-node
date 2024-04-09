@@ -165,6 +165,8 @@ app.post('/initiateSignature', async (request, response) => {
 
       const finalResult = result ? AWS.DynamoDB.Converter.unmarshall(result.Item) : [];
       console.log(finalResult);
+      const loiResult = finalResult
+      console.log("loiResult", loiResult)
 
       //scrap this using UserInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging buyerID  fuelingvendorID
       const buyerID = finalResult.buyerID;
@@ -190,16 +192,46 @@ app.post('/initiateSignature', async (request, response) => {
       };
       const result2 = await dynamodb.getItem(params2).promise();
       const finalResult2 = result2 ? AWS.DynamoDB.Converter.unmarshall(result2.Item) : [];
-      console.log(finalResult2);
+      console.log("Vednor Details", finalResult2);
+      console.log("Buyer Details", finalResult1);
+
+      ///getting vendor email using  companyinformationID fro table CompanyInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging
+      //get all data from CompanyInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging
+      const params3 = {
+        TableName: "CompanyInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging"
+      };
+      const result3 = await dynamodb.scan(params3).promise();
+      const finalResult3 = result3 ? result3.Items.map((item) => { return AWS.DynamoDB.Converter.unmarshall(item) }) : [];
+      console.log("All Data", finalResult3);
+      const vendorObj = finalResult3.find((item) => item.id == finalResult2.companyinformationID)
 
 
+      const buyerObj = finalResult3.find((item) => item.id == finalResult1.companyinformationID)
+      console.log("Buyer Object", buyerObj)
+      console.log("Vendor Object", vendorObj)
+      const buyerEmail = buyerObj.companyEmail
+      const vendorEmail = vendorObj.companyEmail
+      const buyerName = buyerObj.companyName
+      const vendorName = buyerObj.companyName
 
+      //get bank details from table  FinancialInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging using id
+      //get vendorbankDetisl 
+      const paramsForBankAccounts = {
+        TableName: "FinancialInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging"
+      }
+      const bankAccounts = await dynamodb.scan(paramsForBankAccounts).promise();
+      const finalBankAccounts = bankAccounts ? bankAccounts.Items.map((item) => { return AWS.DynamoDB.Converter.unmarshall(item) }) : [];
 
-      const company = "Test Company";
-      const name1 = "Jeet Vani"
-      const email1 = "incognitoconqueror@gmail.com";
-      const name2 = "Jeet Vani";
-      const email2 = "copyrightjeet@gmail.com";
+      const sellerBankAccount = finalBankAccounts.find((item) => item.id == vendorObj.id)
+      const buyerBankAccount = finalBankAccounts.find((item) => item.id == buyerObj.id)
+
+      console.log("sellerBankAccount", sellerBankAccount)
+      console.log("buyerBankAccount", buyerBankAccount)
+      const company = "Fuel Go";
+      const name1 = vendorName
+      const email1 = vendorEmail;
+      const name2 = buyerName;
+      const email2 = buyerEmail;
       await checkToken(request);
       let tabs = docusign.Tabs.constructFromObject({
         textTabs: [
@@ -209,7 +241,7 @@ app.post('/initiateSignature', async (request, response) => {
             locked: "true"
           }, {
             tabLabel: "contract_duration",
-            value: "contract_duration",
+            value: loiResult.contractDuration,
             locked: "true"
 
           },
@@ -219,11 +251,11 @@ app.post('/initiateSignature', async (request, response) => {
             locked: "true"
           }, {
             tabLabel: "buyer_company",
-            value: company,
+            value: buyerObj.companyName,
             locked: "true"
           }, {
             tabLabel: "buyer_id",
-            value: "buyer_id",
+            value: buyerID,
             locked: "true"
           },
           {
@@ -247,91 +279,91 @@ app.post('/initiateSignature', async (request, response) => {
             locked: "true"
           }, {
             tabLabel: "seller_bank_name",
-            value: "seller_bank_name",
+            value: sellerBankAccount.accountName,
             locked: "true"
           }, {
             tabLabel: "seller_bank_address",
-            value: "seller_bank_address",
+            value: vendorObj.companyAddress,
             locked: "true"
           }, {
             tabLabel: "seller_account_number",
-            value: "seller_account_number",
+            value: sellerBankAccount.accountNumber,
             locked: "true"
           },
           {
             tabLabel: "seller_aba",
-            value: "seller_aba",
+            value: sellerBankAccount.IBAN,
             locked: "true"
           },
           {
             tabLabel: "seller_account_name",
-            value: "seller_account_name",
+            value: sellerBankAccount.accountName,
             locked: "true"
 
           }, {
             tabLabel: "seller_swift",
-            value: "seller_swift",
+            value: sellerBankAccount.SWIFT,
             locked: "true"
           }, {
             tabLabel: "seller_bank_officer",
-            value: "seller_bank_officer",
+            value: sellerBankAccount.finRepName,
             locked: "true"
 
           }, {
             tabLabel: "seller_bank_tel",
-            value: "seller_bank_tel",
+            value: vendorObj.companyPhone,
             locked: "true"
           }, {
             tabLabel: "seller_bank_email",
-            value: "seller_bank_email",
+            value: sellerBankAccount.finRepEmail,
             locked: "true"
           },
           //same for buyer
           {
             tabLabel: "buyer_bank_name",
-            value: "buyer_bank_name",
+            value: buyerBankAccount.accountName,
             locked: "true"
           }, {
             tabLabel: "buyer_bank_address",
-            value: "buyer_bank_address",
+            value: buyerObj.companyAddress,
             locked: "true"
           }, {
             tabLabel: "buyer_account_number",
-            value: "buyer_account_number",
+            value: buyerBankAccount.accountNumber,
             locked: "true"
           }, {
             tabLabel: "buyer_account_name",
-            value: "buyer_account_name",
+            value: buyerBankAccount.accountName,
             locked: "true"
 
           }, {
             tabLabel: "buyer_swift",
-            value: "buyer_swift",
+            value: buyerBankAccount.SWIFT,
             locked: "true"
           }, {
             tabLabel: "buyer_bank_officer",
-            value: "buyer_bank_officer",
+            value: buyerBankAccount.finRepName,
             locked: "true"
 
           }, {
             tabLabel: "buyer_bank_tel",
-            value: "buyer_bank_tel",
+            value: buyerObj.companyPhone,
             locked: "true"
           },
           {
             tabLabel: "buyer_bank_aba",
-            value: "buyer_bank_aba",
+            value: buyerBankAccount.IBAN,
             locked: "true"
           },
 
           {
             tabLabel: "buyer_bank_email",
-            value: "buyer_bank_email",
+            value: buyerBankAccount.finRepEmail,
             locked: "true"
           },
           {
             tabLabel: "buyer_name",
-            value: "buyer_name",
+            value: buyerObj.companyName,
             locked: "true"
           }, {
             tabLabel: "date",
@@ -362,51 +394,51 @@ app.post('/initiateSignature', async (request, response) => {
 
 
       // update dynamodb PendingICPO table
-      const updateParams = {
-        TableName: "PendingICPO",
-        Key: {
-          "LOIid": { S: LOIid }
-        },
-        //also set signedBy to buyer
-        UpdateExpression: "set #contractSent = :contractSent  , #signedBy = :signedBy , #envelopId = :envelopId,#envelopType = :envelopType ",
-        ExpressionAttributeNames: {
-          "#contractSent": "contractSent",
-          "#signedBy": "signedBy",
-          "#envelopId": "envelopId",
-          "#envelopType": "envelopType",
+      // const updateParams = {
+      //   TableName: "PendingICPO",
+      //   Key: {
+      //     "LOIid": { S: LOIid }
+      //   },
+      //   //also set signedBy to buyer
+      //   UpdateExpression: "set #contractSent = :contractSent  , #signedBy = :signedBy , #envelopId = :envelopId,#envelopType = :envelopType ",
+      //   ExpressionAttributeNames: {
+      //     "#contractSent": "contractSent",
+      //     "#signedBy": "signedBy",
+      //     "#envelopId": "envelopId",
+      //     "#envelopType": "envelopType",
 
 
 
-        },
-        ExpressionAttributeValues: {
-          ":contractSent": { S: "true" }
+      //   },
+      //   ExpressionAttributeValues: {
+      //     ":contractSent": { S: "true" }
 
-          , ":envelopId": { S: envelopeId },
-          ":envelopType": { S: "contract" },
-          ":signedBy": { S: "0" }
+      //     , ":envelopId": { S: envelopeId },
+      //     ":envelopType": { S: "contract" },
+      //     ":signedBy": { S: "0" }
 
-        }
-      };
-
-
-
-      await dynamodb.updateItem(updateParams).promise();
+      //   }
+      // };
 
 
-      const updateEnvelopId = {
-        TableName: "PendingICPO",
-        Key: {
-          "LOIid": { S: LOIid }
-        },
-        UpdateExpression: "set #envelopId = :envelopId",
-        ExpressionAttributeNames: {
-          "#envelopId": "envelopId"
-        },
-        ExpressionAttributeValues: {
-          ":envelopId": { S: envelopeId }
-        }
-      };
-      await dynamodb.updateItem(updateEnvelopId).promise();
+
+      // await dynamodb.updateItem(updateParams).promise();
+
+
+      // const updateEnvelopId = {
+      //   TableName: "PendingICPO",
+      //   Key: {
+      //     "LOIid": { S: LOIid }
+      //   },
+      //   UpdateExpression: "set #envelopId = :envelopId",
+      //   ExpressionAttributeNames: {
+      //     "#envelopId": "envelopId"
+      //   },
+      //   ExpressionAttributeValues: {
+      //     ":envelopId": { S: envelopeId }
+      //   }
+      // };
+      // await dynamodb.updateItem(updateEnvelopId).promise();
 
 
 
@@ -561,7 +593,7 @@ app.post('/webhook', async (request, response) => {
 
 // https://account-d.docusign.com/oauth/auth?response_type=code&scope=signature%20impersonation&client_id=8f9fee83-9a23-4c41-8166-51447dfddc96&redirect_uri=https://red-average-springbok.cyclic.app
 
-app.listen(3000, () => {
+app.listen(4000, () => {
   console.log("server has started", process.env.USER_ID);
 });
 
