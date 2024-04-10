@@ -81,6 +81,44 @@ exports.createPDF = async (req, res) => {
     doc.fontSize(12);
     doc.text(text, 100, 200);
 
+    const jsonData = [finalLOIObj]
+
+
+
+    //mapping json data
+    let y = 300;
+
+    //remove all keys starting with _
+    const filteredJsonData = jsonData.map((data) => {
+        const filteredData = {};
+        for (const [key, value] of Object.entries(data)) {
+            if (!key.startsWith('_')) {
+                filteredData[key] = value;
+            }
+        }
+        return filteredData;
+    });
+
+    //all are in camel case so make first letter capital and space between words
+    const finalData = filteredJsonData.map((data) => {
+        const formattedData = {};
+        for (const [key, value] of Object.entries(data)) {
+            const formattedKey = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+            formattedData[formattedKey] = value;
+        }
+        return formattedData;
+    }
+    );
+
+
+    finalData.forEach((data) => {
+        for (const [key, value] of Object.entries(data)) {
+            doc.fontSize(12);
+            doc.text(`${key} : ${value}`, 100, y);
+            y = y + 20;
+        }
+    });
+
     // Add image with link below that
     // Assuming you have an image stored locally as "image.png"
     // You can draw the image in the PDF like this:
