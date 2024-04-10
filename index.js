@@ -20,19 +20,7 @@ app.use(session({
 app.use(cors())
 
 app.use(express.json());
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS'); // Allow specific HTTP methods
-  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept'); // Allow specific headers
-  res.setHeader('Access-Control-Allow-Credentials', true); // Allow credentials
 
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-      res.sendStatus(200);
-  } else {
-      next();
-  }
-});
 function getEnvelopesApi(request) {
   let dsApiClient = new docusign.ApiClient();
   dsApiClient.setBasePath(process.env.BASE_PATH);
