@@ -450,15 +450,15 @@ app.post('/initiateSignature', async (request, response) => {
       });
     }
     if (!findUsingLOIid.sellerApproved && !findUsingLOIid.buyerApproved) {
-      response.send("ICPO is not approved by both parties")
+      response.status(409).send({ message: "ICPO is not approved by both parties" })
       return
     }
     if (findUsingLOIid.sellerApproved && !findUsingLOIid.buyerApproved) {
-      response.send("Buyer has not approved the ICPO yet")
+      response.status(409).send({ message: "Buyer has not approved the ICPO yet" })
       return
     }
     if (!findUsingLOIid.sellerApproved && findUsingLOIid.buyerApproved) {
-      response.send("Seller has not approved the ICPO yet")
+      response.status(409).send({ message: "Seller has not approved the ICPO yet" })
       return
     }
     return
@@ -595,7 +595,7 @@ app.post('/webhook', async (request, response) => {
 });
 
 app.post('/loiPDF', createPDF)
-app.get('/loiPDF', (req,res)=>{
+app.get('/loiPDF', (req, res) => {
   res.send("LOI PDF")
 })
 // https://account-d.docusign.com/oauth/auth?response_type=code&scope=signature%20impersonation&client_id=8f9fee83-9a23-4c41-8166-51447dfddc96&redirect_uri=https://red-average-springbok.cyclic.app
