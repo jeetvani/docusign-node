@@ -18,7 +18,19 @@ app.use(session({
   saveUninitialized: true,
 }));
 app.use(express.json());
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS'); // Allow specific HTTP methods
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept'); // Allow specific headers
+  res.setHeader('Access-Control-Allow-Credentials', true); // Allow credentials
 
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+      res.sendStatus(200);
+  } else {
+      next();
+  }
+});
 function getEnvelopesApi(request) {
   let dsApiClient = new docusign.ApiClient();
   dsApiClient.setBasePath(process.env.BASE_PATH);
@@ -597,10 +609,7 @@ app.post('/loiPDF', createPDF)
 // https://account-d.docusign.com/oauth/auth?response_type=code&scope=signature%20impersonation&client_id=8f9fee83-9a23-4c41-8166-51447dfddc96&redirect_uri=https://red-average-springbok.cyclic.app
 
 
-app.use(cors({
-    allowedHeaders:['Content-Type', 'Authorization','Access-Control-Allow-Origin'],
-    origin: '*',
-}));
+
 
 app.listen(4000, () => {
   console.log("server has started", process.env.USER_ID);

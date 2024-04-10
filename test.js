@@ -4,6 +4,7 @@ const AWS = require('aws-sdk');
 const { awsSdk } = require('./awsSDK');
 
 exports.createPDF = async (req, res) => {
+
     function getMonthInLetters(dateString) {
         const date = new Date(dateString);
         const monthNames = [
@@ -18,6 +19,7 @@ exports.createPDF = async (req, res) => {
     if (!LOIid) {
         return res.status(400).json({ message: 'LOIid is required' });
     }
+    console.log("LOI ID",LOIid)
     const dynamoDB = new awsSdk.DynamoDB()
 
     //get data from table LOI-hehdmsyuubfkbfai6tdtjjoxiq-staging
