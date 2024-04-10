@@ -17,9 +17,7 @@ app.use(session({
   resave: true,
   saveUninitialized: true,
 }));
-app.use(cors({
-  origin: "*"
-}));
+app.use(cors());
 app.use(express.json());
 
 function getEnvelopesApi(request) {
