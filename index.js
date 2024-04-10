@@ -17,7 +17,6 @@ app.use(session({
   resave: true,
   saveUninitialized: true,
 }));
-app.use(cors());
 app.use(express.json());
 
 function getEnvelopesApi(request) {
@@ -596,6 +595,12 @@ app.post('/webhook', async (request, response) => {
 app.post('/loiPDF', createPDF)
 
 // https://account-d.docusign.com/oauth/auth?response_type=code&scope=signature%20impersonation&client_id=8f9fee83-9a23-4c41-8166-51447dfddc96&redirect_uri=https://red-average-springbok.cyclic.app
+
+
+app.use(cors({
+    allowedHeaders:['Content-Type', 'Authorization','Access-Control-Allow-Origin'],
+    origin: '*',
+}));
 
 app.listen(4000, () => {
   console.log("server has started", process.env.USER_ID);
