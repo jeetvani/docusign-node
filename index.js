@@ -8,6 +8,7 @@ const fs = require("fs");
 const session = require("express-session");
 const { awsSdk } = require("./awsSDK");
 const AWS = require("aws-sdk");
+const cors = require("cors");
 const { createPDF } = require("./test");
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -16,7 +17,9 @@ app.use(session({
   resave: true,
   saveUninitialized: true,
 }));
-
+app.use(cors({
+  origin: "*"
+}));
 app.use(express.json());
 
 function getEnvelopesApi(request) {
