@@ -397,51 +397,51 @@ app.post('/initiateSignature', async (request, response) => {
 
 
       // update dynamodb PendingICPO table
-      // const updateParams = {
-      //   TableName: "PendingICPO",
-      //   Key: {
-      //     "LOIid": { S: LOIid }
-      //   },
-      //   //also set signedBy to buyer
-      //   UpdateExpression: "set #contractSent = :contractSent  , #signedBy = :signedBy , #envelopId = :envelopId,#envelopType = :envelopType ",
-      //   ExpressionAttributeNames: {
-      //     "#contractSent": "contractSent",
-      //     "#signedBy": "signedBy",
-      //     "#envelopId": "envelopId",
-      //     "#envelopType": "envelopType",
+      const updateParams = {
+        TableName: "PendingICPO",
+        Key: {
+          "LOIid": { S: LOIid }
+        },
+        //also set signedBy to buyer
+        UpdateExpression: "set #contractSent = :contractSent  , #signedBy = :signedBy , #envelopId = :envelopId,#envelopType = :envelopType ",
+        ExpressionAttributeNames: {
+          "#contractSent": "contractSent",
+          "#signedBy": "signedBy",
+          "#envelopId": "envelopId",
+          "#envelopType": "envelopType",
 
 
 
-      //   },
-      //   ExpressionAttributeValues: {
-      //     ":contractSent": { S: "true" }
+        },
+        ExpressionAttributeValues: {
+          ":contractSent": { S: "true" }
 
-      //     , ":envelopId": { S: envelopeId },
-      //     ":envelopType": { S: "contract" },
-      //     ":signedBy": { S: "0" }
+          , ":envelopId": { S: envelopeId },
+          ":envelopType": { S: "contract" },
+          ":signedBy": { S: "0" }
 
-      //   }
-      // };
-
-
-
-      // await dynamodb.updateItem(updateParams).promise();
+        }
+      };
 
 
-      // const updateEnvelopId = {
-      //   TableName: "PendingICPO",
-      //   Key: {
-      //     "LOIid": { S: LOIid }
-      //   },
-      //   UpdateExpression: "set #envelopId = :envelopId",
-      //   ExpressionAttributeNames: {
-      //     "#envelopId": "envelopId"
-      //   },
-      //   ExpressionAttributeValues: {
-      //     ":envelopId": { S: envelopeId }
-      //   }
-      // };
-      // await dynamodb.updateItem(updateEnvelopId).promise();
+
+      await dynamodb.updateItem(updateParams).promise();
+
+
+      const updateEnvelopId = {
+        TableName: "PendingICPO",
+        Key: {
+          "LOIid": { S: LOIid }
+        },
+        UpdateExpression: "set #envelopId = :envelopId",
+        ExpressionAttributeNames: {
+          "#envelopId": "envelopId"
+        },
+        ExpressionAttributeValues: {
+          ":envelopId": { S: envelopeId }
+        }
+      };
+      await dynamodb.updateItem(updateEnvelopId).promise();
 
 
 
