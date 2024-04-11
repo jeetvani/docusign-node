@@ -137,353 +137,358 @@ app.get("/success", (request, resposne) => {
 
 app.post('/initiateSignature', async (request, response) => {
   const { LOIid } = request.body;
+  console.log("LOIid", LOIid);
+  try {
+    if (!LOIid) {
+      response.send("LOIid is required");
+      return
+    }
 
-  if (!LOIid) {
-    response.send("LOIid is required");
-    return
-  }
-
-  const dynamodb = new awsSdk.DynamoDB()
-  //get table  PendingICPO table
-  const params = {
-    TableName: "PendingICPO",
-
-
-  };
-  const result = await dynamodb.scan(params).promise();
-  console.log(result);
-
-  const finalResult = result ? result.Items.map((item) => { return AWS.DynamoDB.Converter.unmarshall(item) }) : [];
+    const dynamodb = new awsSdk.DynamoDB()
+    //get table  PendingICPO table
+    const params = {
+      TableName: "PendingICPO",
 
 
-  const findUsingLOIid = finalResult.find((item) => item.LOIid === LOIid);
-  console.log(findUsingLOIid);
-  if (!findUsingLOIid) {
-    response.send("LOIid not found");
-    return
-  }
-  if (findUsingLOIid.contractSent) {
-    return response.send({
-      message: "Contract is already sent for signature"
-    });
-  }
-  if (findUsingLOIid) {
+    };
+    const result = await dynamodb.scan(params).promise();
+    console.log(result);
 
-    if (findUsingLOIid.sellerApproved && findUsingLOIid.buyerApproved) {
+    const finalResult = result ? result.Items.map((item) => { return AWS.DynamoDB.Converter.unmarshall(item) }) : [];
 
 
-      // get data from LOI-hehdmsyuubfkbfai6tdtjjoxiq-staging
-      const params = {
-        TableName: "LOI-hehdmsyuubfkbfai6tdtjjoxiq-staging",
-        Key: {
-          "id": { S: LOIid }
+    const findUsingLOIid = finalResult.find((item) => item.LOIid === LOIid);
+    console.log(findUsingLOIid);
+    if (!findUsingLOIid) {
+      response.send("LOIid not found");
+      return
+    }
+    if (findUsingLOIid.contractSent) {
+      return response.send({
+        message: "Contract is already sent for signature"
+      });
+    }
+    if (findUsingLOIid) {
+
+      if (findUsingLOIid.sellerApproved && findUsingLOIid.buyerApproved) {
+
+
+        // get data from LOI-hehdmsyuubfkbfai6tdtjjoxiq-staging
+        const params = {
+          TableName: "LOI-hehdmsyuubfkbfai6tdtjjoxiq-staging",
+          Key: {
+            "id": { S: LOIid }
+          }
+
+        };
+        const result = await dynamodb.getItem(params).promise();
+
+        const finalResult = result ? AWS.DynamoDB.Converter.unmarshall(result.Item) : [];
+        console.log(finalResult);
+        const loiResult = finalResult
+        console.log("loiResult", loiResult)
+
+        //scrap this using UserInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging buyerID  fuelingvendorID
+        const buyerID = finalResult.buyerID;
+        const fuelingvendorID = finalResult.fuelingvendorID;
+        const params1 = {
+          TableName: "UserInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging",
+          Key: {
+            "id": { S: buyerID }
+          }
+
+        };
+        const result1 = await dynamodb.getItem(params1).promise();
+
+        const finalResult1 = result1 ? AWS.DynamoDB.Converter.unmarshall(result1.Item) : [];
+
+
+
+        const params2 = {
+          TableName: "UserInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging",
+          Key: {
+            "id": { S: fuelingvendorID }
+          }
+        };
+        const result2 = await dynamodb.getItem(params2).promise();
+        const finalResult2 = result2 ? AWS.DynamoDB.Converter.unmarshall(result2.Item) : [];
+        console.log("Vednor Details", finalResult2);
+        console.log("Buyer Details", finalResult1);
+
+        ///getting vendor email using  companyinformationID fro table CompanyInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging
+        //get all data from CompanyInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging
+        const params3 = {
+          TableName: "CompanyInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging"
+        };
+        const result3 = await dynamodb.scan(params3).promise();
+        const finalResult3 = result3 ? result3.Items.map((item) => { return AWS.DynamoDB.Converter.unmarshall(item) }) : [];
+        console.log("All Data", finalResult3);
+        const vendorObj = finalResult3.find((item) => item.id == finalResult2.companyinformationID)
+
+
+        const buyerObj = finalResult3.find((item) => item.id == finalResult1.companyinformationID)
+        console.log("Buyer Object", buyerObj)
+        console.log("Vendor Object", vendorObj)
+        const buyerEmail = buyerObj.companyEmail
+        const vendorEmail = vendorObj.companyEmail
+        const buyerName = buyerObj.companyName
+        const vendorName = buyerObj.companyName
+
+        //get bank details from table  FinancialInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging using id
+        //get vendorbankDetisl 
+        const paramsForBankAccounts = {
+          TableName: "FinancialInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging"
         }
+        const bankAccounts = await dynamodb.scan(paramsForBankAccounts).promise();
+        const finalBankAccounts = bankAccounts ? bankAccounts.Items.map((item) => { return AWS.DynamoDB.Converter.unmarshall(item) }) : [];
 
-      };
-      const result = await dynamodb.getItem(params).promise();
+        const sellerBankAccount = finalBankAccounts.find((item) => item.id == vendorObj.id)
+        const buyerBankAccount = finalBankAccounts.find((item) => item.id == buyerObj.id)
 
-      const finalResult = result ? AWS.DynamoDB.Converter.unmarshall(result.Item) : [];
-      console.log(finalResult);
-      const loiResult = finalResult
-      console.log("loiResult", loiResult)
+        console.log("sellerBankAccount", sellerBankAccount)
+        console.log("buyerBankAccount", buyerBankAccount)
+        const company = "Fuel Go";
+        const name1 = vendorName
+        const email1 = vendorEmail;
+        const name2 = buyerName;
+        const email2 = buyerEmail;
+        await checkToken(request);
+        let tabs = docusign.Tabs.constructFromObject({
+          textTabs: [
+            {
+              tabLabel: "vendor_id",
+              value: fuelingvendorID,
+              locked: "true"
+            }, {
+              tabLabel: "contract_duration",
+              value: loiResult.contractDuration,
+              locked: "true"
 
-      //scrap this using UserInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging buyerID  fuelingvendorID
-      const buyerID = finalResult.buyerID;
-      const fuelingvendorID = finalResult.fuelingvendorID;
-      const params1 = {
-        TableName: "UserInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging",
-        Key: {
-          "id": { S: buyerID }
-        }
+            },
+            {
+              tabLabel: "vendor_country",
+              value: finalResult.origin,
+              locked: "true"
+            }, {
+              tabLabel: "buyer_company",
+              value: buyerObj.companyName,
+              locked: "true"
+            }, {
+              tabLabel: "buyer_id",
+              value: buyerID,
+              locked: "true"
+            },
+            {
+              tabLabel: "buyer_country",
+              value: finalResult.country,
+              locked: "true"
+            },
+            {
+              tabLabel: "fuel_type",
+              value: finalResult.fuelType,
+              locked: "true"
 
-      };
-      const result1 = await dynamodb.getItem(params1).promise();
+            },
+            {
+              tabLabel: "quantity",
+              value: finalResult.quantity,
+              locked: "true"
+            }, {
+              tabLabel: "price",
+              value: finalResult.price,
+              locked: "true"
+            }, {
+              tabLabel: "seller_bank_name",
+              value: sellerBankAccount.accountName,
+              locked: "true"
+            }, {
+              tabLabel: "seller_bank_address",
+              value: vendorObj.companyAddress,
+              locked: "true"
+            }, {
+              tabLabel: "seller_account_number",
+              value: sellerBankAccount.accountNumber,
+              locked: "true"
+            },
+            {
+              tabLabel: "seller_aba",
+              value: sellerBankAccount.IBAN,
+              locked: "true"
+            },
+            {
+              tabLabel: "seller_account_name",
+              value: sellerBankAccount.accountName,
+              locked: "true"
 
-      const finalResult1 = result1 ? AWS.DynamoDB.Converter.unmarshall(result1.Item) : [];
+            }, {
+              tabLabel: "seller_swift",
+              value: sellerBankAccount.SWIFT,
+              locked: "true"
+            }, {
+              tabLabel: "seller_bank_officer",
+              value: sellerBankAccount.finRepName,
+              locked: "true"
+
+            }, {
+              tabLabel: "seller_bank_tel",
+              value: vendorObj.companyPhone,
+              locked: "true"
+            }, {
+              tabLabel: "seller_bank_email",
+              value: sellerBankAccount.finRepEmail,
+              locked: "true"
+            },
+            //same for buyer
+            {
+              tabLabel: "buyer_bank_name",
+              value: buyerBankAccount.accountName,
+              locked: "true"
+            }, {
+              tabLabel: "buyer_bank_address",
+              value: buyerObj.companyAddress,
+              locked: "true"
+            }, {
+              tabLabel: "buyer_account_number",
+              value: buyerBankAccount.accountNumber,
+              locked: "true"
+            }, {
+              tabLabel: "buyer_account_name",
+              value: buyerBankAccount.accountName,
+              locked: "true"
+
+            }, {
+              tabLabel: "buyer_swift",
+              value: buyerBankAccount.SWIFT,
+              locked: "true"
+            }, {
+              tabLabel: "buyer_bank_officer",
+              value: buyerBankAccount.finRepName,
+              locked: "true"
+
+            }, {
+              tabLabel: "buyer_bank_tel",
+              value: buyerObj.companyPhone,
+              locked: "true"
+            },
+            {
+              tabLabel: "buyer_bank_aba",
+              value: buyerBankAccount.IBAN,
+              locked: "true"
+            },
+
+            {
+              tabLabel: "buyer_bank_email",
+              value: buyerBankAccount.finRepEmail,
+              locked: "true"
+            },
+            {
+              tabLabel: "buyer_name",
+              value: buyerObj.companyName,
+              locked: "true"
+            }, {
+              tabLabel: "date",
+              //format date dd/mm/yyyy
+              value: new Date().toLocaleDateString('en-GB'),
+              locked: "true"
+
+            }
+          ],
+        });
+
+
+        let envelopesApi = getEnvelopesApi(request);
+        let envelope = makeEnvelope([name1, name2], [email1, email2], [tabs, tabs]);
+
+        let results = await envelopesApi.createEnvelope(
+          process.env.ACCOUNT_ID, { envelopeDefinition: envelope });
 
 
 
-      const params2 = {
-        TableName: "UserInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging",
-        Key: {
-          "id": { S: fuelingvendorID }
-        }
-      };
-      const result2 = await dynamodb.getItem(params2).promise();
-      const finalResult2 = result2 ? AWS.DynamoDB.Converter.unmarshall(result2.Item) : [];
-      console.log("Vednor Details", finalResult2);
-      console.log("Buyer Details", finalResult1);
-
-      ///getting vendor email using  companyinformationID fro table CompanyInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging
-      //get all data from CompanyInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging
-      const params3 = {
-        TableName: "CompanyInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging"
-      };
-      const result3 = await dynamodb.scan(params3).promise();
-      const finalResult3 = result3 ? result3.Items.map((item) => { return AWS.DynamoDB.Converter.unmarshall(item) }) : [];
-      console.log("All Data", finalResult3);
-      const vendorObj = finalResult3.find((item) => item.id == finalResult2.companyinformationID)
+        console.log("envelope results ", results.envelopeId);
+        const envelopeId = results.envelopeId
+        // Create the recipient view, the Signing Ceremony
+        let viewRequest = makeRecipientViewRequest(name1, email1);
+        results = await envelopesApi.createRecipientView(process.env.ACCOUNT_ID, results.envelopeId,
+          { recipientViewRequest: viewRequest });
 
 
-      const buyerObj = finalResult3.find((item) => item.id == finalResult1.companyinformationID)
-      console.log("Buyer Object", buyerObj)
-      console.log("Vendor Object", vendorObj)
-      const buyerEmail = buyerObj.companyEmail
-      const vendorEmail = vendorObj.companyEmail
-      const buyerName = buyerObj.companyName
-      const vendorName = buyerObj.companyName
 
-      //get bank details from table  FinancialInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging using id
-      //get vendorbankDetisl 
-      const paramsForBankAccounts = {
-        TableName: "FinancialInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging"
-      }
-      const bankAccounts = await dynamodb.scan(paramsForBankAccounts).promise();
-      const finalBankAccounts = bankAccounts ? bankAccounts.Items.map((item) => { return AWS.DynamoDB.Converter.unmarshall(item) }) : [];
+        // update dynamodb PendingICPO table
+        const updateParams = {
+          TableName: "PendingICPO",
+          Key: {
+            "LOIid": { S: LOIid }
+          },
+          //also set signedBy to buyer
+          UpdateExpression: "set #contractSent = :contractSent  , #signedBy = :signedBy , #envelopId = :envelopId,#envelopType = :envelopType ",
+          ExpressionAttributeNames: {
+            "#contractSent": "contractSent",
+            "#signedBy": "signedBy",
+            "#envelopId": "envelopId",
+            "#envelopType": "envelopType",
 
-      const sellerBankAccount = finalBankAccounts.find((item) => item.id == vendorObj.id)
-      const buyerBankAccount = finalBankAccounts.find((item) => item.id == buyerObj.id)
 
-      console.log("sellerBankAccount", sellerBankAccount)
-      console.log("buyerBankAccount", buyerBankAccount)
-      const company = "Fuel Go";
-      const name1 = vendorName
-      const email1 = vendorEmail;
-      const name2 = buyerName;
-      const email2 = buyerEmail;
-      await checkToken(request);
-      let tabs = docusign.Tabs.constructFromObject({
-        textTabs: [
-          {
-            tabLabel: "vendor_id",
-            value: fuelingvendorID,
-            locked: "true"
-          }, {
-            tabLabel: "contract_duration",
-            value: loiResult.contractDuration,
-            locked: "true"
 
           },
-          {
-            tabLabel: "vendor_country",
-            value: finalResult.origin,
-            locked: "true"
-          }, {
-            tabLabel: "buyer_company",
-            value: buyerObj.companyName,
-            locked: "true"
-          }, {
-            tabLabel: "buyer_id",
-            value: buyerID,
-            locked: "true"
-          },
-          {
-            tabLabel: "buyer_country",
-            value: finalResult.country,
-            locked: "true"
-          },
-          {
-            tabLabel: "fuel_type",
-            value: finalResult.fuelType,
-            locked: "true"
+          ExpressionAttributeValues: {
+            ":contractSent": { S: "true" }
 
-          },
-          {
-            tabLabel: "quantity",
-            value: finalResult.quantity,
-            locked: "true"
-          }, {
-            tabLabel: "price",
-            value: finalResult.price,
-            locked: "true"
-          }, {
-            tabLabel: "seller_bank_name",
-            value: sellerBankAccount.accountName,
-            locked: "true"
-          }, {
-            tabLabel: "seller_bank_address",
-            value: vendorObj.companyAddress,
-            locked: "true"
-          }, {
-            tabLabel: "seller_account_number",
-            value: sellerBankAccount.accountNumber,
-            locked: "true"
-          },
-          {
-            tabLabel: "seller_aba",
-            value: sellerBankAccount.IBAN,
-            locked: "true"
-          },
-          {
-            tabLabel: "seller_account_name",
-            value: sellerBankAccount.accountName,
-            locked: "true"
-
-          }, {
-            tabLabel: "seller_swift",
-            value: sellerBankAccount.SWIFT,
-            locked: "true"
-          }, {
-            tabLabel: "seller_bank_officer",
-            value: sellerBankAccount.finRepName,
-            locked: "true"
-
-          }, {
-            tabLabel: "seller_bank_tel",
-            value: vendorObj.companyPhone,
-            locked: "true"
-          }, {
-            tabLabel: "seller_bank_email",
-            value: sellerBankAccount.finRepEmail,
-            locked: "true"
-          },
-          //same for buyer
-          {
-            tabLabel: "buyer_bank_name",
-            value: buyerBankAccount.accountName,
-            locked: "true"
-          }, {
-            tabLabel: "buyer_bank_address",
-            value: buyerObj.companyAddress,
-            locked: "true"
-          }, {
-            tabLabel: "buyer_account_number",
-            value: buyerBankAccount.accountNumber,
-            locked: "true"
-          }, {
-            tabLabel: "buyer_account_name",
-            value: buyerBankAccount.accountName,
-            locked: "true"
-
-          }, {
-            tabLabel: "buyer_swift",
-            value: buyerBankAccount.SWIFT,
-            locked: "true"
-          }, {
-            tabLabel: "buyer_bank_officer",
-            value: buyerBankAccount.finRepName,
-            locked: "true"
-
-          }, {
-            tabLabel: "buyer_bank_tel",
-            value: buyerObj.companyPhone,
-            locked: "true"
-          },
-          {
-            tabLabel: "buyer_bank_aba",
-            value: buyerBankAccount.IBAN,
-            locked: "true"
-          },
-
-          {
-            tabLabel: "buyer_bank_email",
-            value: buyerBankAccount.finRepEmail,
-            locked: "true"
-          },
-          {
-            tabLabel: "buyer_name",
-            value: buyerObj.companyName,
-            locked: "true"
-          }, {
-            tabLabel: "date",
-            //format date dd/mm/yyyy
-            value: new Date().toLocaleDateString('en-GB'),
-            locked: "true"
+            , ":envelopId": { S: envelopeId },
+            ":envelopType": { S: "contract" },
+            ":signedBy": { S: "0" }
 
           }
-        ],
-      });
-
-
-      let envelopesApi = getEnvelopesApi(request);
-      let envelope = makeEnvelope([name1, name2], [email1, email2], [tabs, tabs]);
-
-      let results = await envelopesApi.createEnvelope(
-        process.env.ACCOUNT_ID, { envelopeDefinition: envelope });
+        };
 
 
 
-      console.log("envelope results ", results.envelopeId);
-      const envelopeId = results.envelopeId
-      // Create the recipient view, the Signing Ceremony
-      let viewRequest = makeRecipientViewRequest(name1, email1);
-      results = await envelopesApi.createRecipientView(process.env.ACCOUNT_ID, results.envelopeId,
-        { recipientViewRequest: viewRequest });
+        await dynamodb.updateItem(updateParams).promise();
+
+
+        const updateEnvelopId = {
+          TableName: "PendingICPO",
+          Key: {
+            "LOIid": { S: LOIid }
+          },
+          UpdateExpression: "set #envelopId = :envelopId",
+          ExpressionAttributeNames: {
+            "#envelopId": "envelopId"
+          },
+          ExpressionAttributeValues: {
+            ":envelopId": { S: envelopeId }
+          }
+        };
+        await dynamodb.updateItem(updateEnvelopId).promise();
 
 
 
-      // update dynamodb PendingICPO table
-      const updateParams = {
-        TableName: "PendingICPO",
-        Key: {
-          "LOIid": { S: LOIid }
-        },
-        //also set signedBy to buyer
-        UpdateExpression: "set #contractSent = :contractSent  , #signedBy = :signedBy , #envelopId = :envelopId,#envelopType = :envelopType ",
-        ExpressionAttributeNames: {
-          "#contractSent": "contractSent",
-          "#signedBy": "signedBy",
-          "#envelopId": "envelopId",
-          "#envelopType": "envelopType",
-
-
-
-        },
-        ExpressionAttributeValues: {
-          ":contractSent": { S: "true" }
-
-          , ":envelopId": { S: envelopeId },
-          ":envelopType": { S: "contract" },
-          ":signedBy": { S: "0" }
-
-        }
-      };
-
-
-
-      await dynamodb.updateItem(updateParams).promise();
-
-
-      const updateEnvelopId = {
-        TableName: "PendingICPO",
-        Key: {
-          "LOIid": { S: LOIid }
-        },
-        UpdateExpression: "set #envelopId = :envelopId",
-        ExpressionAttributeNames: {
-          "#envelopId": "envelopId"
-        },
-        ExpressionAttributeValues: {
-          ":envelopId": { S: envelopeId }
-        }
-      };
-      await dynamodb.updateItem(updateEnvelopId).promise();
-
-
-
-      return response.send({
-        message: "ICPO is approved by both parties and Contract is sent for signature",
-      });
-    }
-    if (!findUsingLOIid.sellerApproved && !findUsingLOIid.buyerApproved) {
-      response.status(409).send({ message: "ICPO is not approved by both parties" })
+        return response.send({
+          message: "ICPO is approved by both parties and Contract is sent for signature",
+        });
+      }
+      if (!findUsingLOIid.sellerApproved && !findUsingLOIid.buyerApproved) {
+        response.status(409).send({ message: "ICPO is not approved by both parties" })
+        return
+      }
+      if (findUsingLOIid.sellerApproved && !findUsingLOIid.buyerApproved) {
+        response.status(409).send({ message: "Buyer has not approved the ICPO yet" })
+        return
+      }
+      if (!findUsingLOIid.sellerApproved && findUsingLOIid.buyerApproved) {
+        response.status(409).send({ message: "Seller has not approved the ICPO yet" })
+        return
+      }
       return
     }
-    if (findUsingLOIid.sellerApproved && !findUsingLOIid.buyerApproved) {
-      response.status(409).send({ message: "Buyer has not approved the ICPO yet" })
-      return
-    }
-    if (!findUsingLOIid.sellerApproved && findUsingLOIid.buyerApproved) {
-      response.status(409).send({ message: "Seller has not approved the ICPO yet" })
-      return
-    }
+  }
+  catch (error) {
+    console.log(error);
+    response.status(500).send({ message: "Internal server error" });
     return
   }
 
 
 
-
-  return
 
 
 
