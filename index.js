@@ -26,7 +26,9 @@ app.use(session({
   resave: true,
   saveUninitialized: true,
 }));
-app.use(cors())
+app.use(cors({
+  origin:"https://fuelgo-admin.vercel.app/"
+}))
 
 app.use(express.json());
 
