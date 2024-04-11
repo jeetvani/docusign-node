@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@paypal/checkout-server-sdk": "^1.0.3",
     "aws-sdk": "^2.1594.0",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",

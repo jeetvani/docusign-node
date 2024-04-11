@@ -3,14 +3,23 @@ const path = require("path");
 const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
 dotenv.config();
+const paypal = require('@paypal/checkout-server-sdk');
 const docusign = require("docusign-esign");
 const fs = require("fs");
 const session = require("express-session");
 const { awsSdk } = require("./awsSDK");
 const AWS = require("aws-sdk");
 const cors = require("cors");
-const { createPDF } = require("./test");
+const { createPDF, createPaymentOrder } = require("./test");
 const app = express();
+
+const payPalConfig = {
+  mode: 'sandbox', //sandbox or live
+  client_id: 'AeYujINFGrnlFLkJ_2LIU4uuuxguSpWX0dV7bAEmcXDuA0hC1OvzJNC9ew0F3ZUW-BayYs32I6Q5vwjc',
+  client_secret: 'EKy6RmzYUqosustw0b6-YODV8HNjlwBgNLGgWGWN3jW1emwbC5EW3fMIkdT3HThxozWAUuZWSVKTWprO'
+}
+const environment = new paypal.core.SandboxEnvironment(payPalConfig.client_id, payPalConfig.client_secret);
+const client = new paypal.core.PayPalHttpClient(environment);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(session({
   secret: "dfsf94835asda",
@@ -474,6 +483,8 @@ app.post('/initiateSignature', async (request, response) => {
 });
 
 
+app.post('/createPaymentOrder', createPaymentOrder)
+
 app.post('/webhook', async (request, response) => {
   // console.log("webhook called");
   // console.log("WEBHOOK BODY", request.body);
@@ -551,7 +562,8 @@ app.post('/webhook', async (request, response) => {
                 "id": { S: LOIid }
               }
             };
-            dynamodb.getItem(findingParams, (err, data) => {
+
+            dynamodb.getItem(findingParams, async (err, data) => {
               if (err) {
                 console.error("Unable to get item. Error JSON:", JSON.stringify(err, null, 2));
               } else {
@@ -559,25 +571,53 @@ app.post('/webhook', async (request, response) => {
                 const loiData = data ? AWS.DynamoDB.Converter.unmarshall(data.Item) : [];
                 console.log(loiData);
 
-                const params = {
-                  TableName: "Payments",
-                  Item: {
-                    "LOIid": { S: LOIid },
-                    "buyerID": { S: loiData.buyerID },
-                    "fuelingvendorID": { S: loiData.fuelingvendorID },
-                    "amount": { S: JSON.stringify(loiData.price) },
-                    "paid": { S: "0" },
-                    "downPayment": { S: JSON.stringify(parseFloat(loiData.price) * 0.1) },
-                  }
-                };
-                dynamodb.putItem(params, (err, data) => {
-                  if (err) {
-                    console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
-                  } else {
-                    console.log("NEW PAYMENT ITEM ADDED")
-                    console.log("Added item:", JSON.stringify(data, null, 2));
-                  }
+                //! Create a new order IN PAYPAL
+                const request = new paypal.orders.OrdersCreateRequest();
+                request.prefer('return=representation');
+                request.requestBody({
+                  intent: 'CAPTURE',
+                  purchase_units: [{
+                    amount: {
+                      currency_code: 'USD',
+                      value: parseFloat(loiData.price).toFixed(2)
+                    }
+                  }]
                 });
+                try {
+                  const response = await client.execute(request);
+                  const orderId = response.result.id;
+                  const paymentLink = response.result.links.find(link => link.rel === 'approve').href;
+                  const params = {
+                    TableName: "Payments",
+                    Item: {
+                      "LOIid": { S: LOIid },
+                      "buyerID": { S: loiData.buyerID },
+                      "fuelingvendorID": { S: loiData.fuelingvendorID },
+                      "amount": { S: JSON.stringify(loiData.price) },
+                      "paid": { S: "0" },
+                      "downPayment": { S: JSON.stringify(parseFloat(loiData.price) * 0.1) },
+                      "orderId": { S: orderId },
+                      "paymentLink": { S: paymentLink },
+                    }
+                  };
+
+                  dynamodb.putItem(params, (err, data) => {
+                    if (err) {
+                      console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+                    } else {
+                      console.log("NEW PAYMENT ITEM ADDED")
+                      console.log("Added item:", JSON.stringify(data, null, 2));
+                    }
+                  });
+                } catch (err) {
+                  console.error('Error creating order:', err);
+                  res.status(500).json({ error: 'Failed to create order' });
+                }
+                //! Create a new order IN PAYPAL
+
+
+
+
               }
             }
             );

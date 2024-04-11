@@ -1,7 +1,7 @@
 const PDFDocument = require('pdfkit');
 const AWS = require('aws-sdk');
 const { awsSdk } = require('./awsSDK');
-
+const paypal = require('@paypal/checkout-server-sdk');
 exports.createPDF = async (req, res) => {
 
     function getMonthInLetters(dateString) {
@@ -153,4 +153,38 @@ exports.createPDF = async (req, res) => {
     });
 
     doc.end();
+}
+
+
+const payPalConfig = {
+    mode: 'sandbox', //sandbox or live
+    client_id: 'AeYujINFGrnlFLkJ_2LIU4uuuxguSpWX0dV7bAEmcXDuA0hC1OvzJNC9ew0F3ZUW-BayYs32I6Q5vwjc',
+    client_secret: 'EKy6RmzYUqosustw0b6-YODV8HNjlwBgNLGgWGWN3jW1emwbC5EW3fMIkdT3HThxozWAUuZWSVKTWprO'
+}
+
+exports.createPaymentOrder = async (req, res) => {
+    const environment = new paypal.core.SandboxEnvironment(payPalConfig.client_id, payPalConfig.client_secret);
+    const client = new paypal.core.PayPalHttpClient(environment);
+
+    const request = new paypal.orders.OrdersCreateRequest();
+    request.prefer('return=representation');
+    request.requestBody({
+        intent: 'CAPTURE',
+        purchase_units: [{
+            amount: {
+                currency_code: 'USD',
+                value: '10.00'
+            }
+        }]
+    });
+    try {
+        const response = await client.execute(request);
+        const orderId = response.result.id;
+        const paymentLink = response.result.links.find(link => link.rel === 'approve').href;
+        res.status(200).json({ orderId, paymentLink });
+    } catch (err) {
+        console.error('Error creating order:', err);
+        res.status(500).json({ error: 'Failed to create order' });
+    }
+
 }
