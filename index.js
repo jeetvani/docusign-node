@@ -528,7 +528,7 @@ app.post('/paymentWebhook', (req, res) => {
   if (webhookEvent.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
     // Payment was successfully captured
     console.log('Payment captured successfully');
-    // Perform any necessary actions (e.g., update database, send confirmation email)
+
   } else if (webhookEvent.event_type === 'PAYMENT.CAPTURE.DENIED') {
     // Payment capture was denied
     console.log('Payment capture denied');
