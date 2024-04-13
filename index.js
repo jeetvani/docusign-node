@@ -94,6 +94,29 @@ function makeEnvelope(names, emails, tabsArray) {
 }
 
 
+function makeRWAEnvelope(names, emails, tabsArray) {
+  let env = new docusign.EnvelopeDefinition();
+
+  console.log("expirationDate");
+  console.log(env.expireAfter);
+  console.log("expirationDate");
+  env.emailSubject = "RWA Contract";
+  env.templateId = RWA_TEMPLATE_ID;
+  env.recipients = new docusign.Recipients();
+
+  env.templateRoles = [{
+    email: emails[0],
+    name: names[0],
+    roleName: 'banker',
+    tabs: tabsArray[0], // Provide tabs for the current recipient
+  }];
+
+
+  env.status = "sent";
+
+  return env;
+}
+
 function makeRecipientViewRequest(name, email) {
 
   let viewRequest = new docusign.RecipientViewRequest();
