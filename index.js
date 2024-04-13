@@ -3,6 +3,8 @@ const path = require("path");
 const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
 dotenv.config();
+
+const RWA_TEMPLATE_ID = "024ab86d-f47c-435a-bfd6-82852d09f8d9"
 const paypal = require('@paypal/checkout-server-sdk');
 const docusign = require("docusign-esign");
 const fs = require("fs");
@@ -610,7 +612,7 @@ app.post('/webhook', async (request, response) => {
                   purchase_units: [{
                     amount: {
                       currency_code: 'USD',
-                      value: parseFloat(loiData.price).toFixed(2)
+                      value: (parseFloat(loiData.price).toFixed(2)) * 0.1
                     }
                   }]
                 });
