@@ -570,9 +570,18 @@ app.post('/simulatePayment', async (req, res) => {
       });
     }
     if (finalResult) {
-      return res.status(200).send({
-        finalResult
-      });
+      const findOrder = finalResult.find((item) => item.orderId === orderId);
+      if (!findOrder) {
+        return res.status(404).send({
+          message: "Order not found"
+        });
+      }
+      if (findOrder)
+
+        return res.status(200).send({
+          findOrder
+        });
+
     }
 
   }
