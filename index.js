@@ -545,9 +545,30 @@ app.post('/simulatePayment', async (req, res) => {
     return res.status(400).send({
       message: "orderId is required"
     });
-    if (orderId) {
 
+  }
+  if (orderId) {
+    /// using drnamodb get item from Payments table
+    const dynamodb = new awsSdk.DynamoDB()
+    const params = {
+      TableName: "Payments",
+      Key: {
+        "orderId": { S: orderId }
+      }
+    };
+    const result = await dynamodb.getItem(params).promise();
+    const finalResult = result ? AWS.DynamoDB.Converter.unmarshall(result.Item) : [];
+    if (!finalResult) {
+      return res.status(404).send({
+        message: "Order not found"
+      });
     }
+    if (finalResult) {
+      return res.status(200).send({
+        finalResult
+      });
+    }
+
   }
 
 })
