@@ -33,7 +33,7 @@ app.use(cors({
   origin: "*",
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   preflightContinue: false,
-  
+
 }))
 
 app.use(function (req, res, next) {
@@ -558,12 +558,12 @@ app.post('/simulatePayment', async (req, res) => {
     const dynamodb = new awsSdk.DynamoDB()
     const params = {
       TableName: "Payments",
-      Key: {
-        "orderId": { S: orderId }
-      }
+
     };
-    const result = await dynamodb.getItem(params).promise();
-    const finalResult = result ? AWS.DynamoDB.Converter.unmarshall(result.Item) : [];
+    const result = await dynamodb.scan(params).promise();
+    const finalResult = result ?
+      result.Items.map((item) => { return AWS.DynamoDB.Converter.unmarshall(item) }) : [];
+
     if (!finalResult) {
       return res.status(404).send({
         message: "Order not found"
