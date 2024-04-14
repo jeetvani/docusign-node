@@ -28,7 +28,9 @@ app.use(session({
   resave: true,
   saveUninitialized: true,
 }));
-app.use(cors())
+app.use(cors({
+  origin: "http://localhost:3000",
+}))
 
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
