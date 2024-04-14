@@ -539,6 +539,15 @@ app.post('/paymentWebhook', (req, res) => {
 });
 
 
+app.post('/simulatePayment', async (req, res) => {
+  const { orderId } = req.body;
+  if (!orderId) {
+    return res.status(400).send({
+      message: "orderId is required"
+    });
+
+  })
+
 app.post('/createPaymentOrder', createPaymentOrder)
 
 app.post('/webhook', async (request, response) => {
