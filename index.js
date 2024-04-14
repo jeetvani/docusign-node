@@ -545,8 +545,9 @@ app.post('/simulatePayment', async (req, res) => {
     return res.status(400).send({
       message: "orderId is required"
     });
+  }
 
-  })
+})
 
 app.post('/createPaymentOrder', createPaymentOrder)
 
