@@ -544,21 +544,18 @@ app.post('/paymentWebhook', (req, res) => {
   res.status(200).send('Webhook received');
 });
 
-
 app.post('/simulatePayment', async (req, res) => {
-  const { orderId } = req.body;
-  if (!orderId) {
-    return res.status(400).send({
-      message: "orderId is required"
-    });
+  try {
+    const { orderId } = req.body;
+    if (!orderId) {
+      return res.status(400).send({
+        message: "orderId is required"
+      });
+    }
 
-  }
-  if (orderId) {
-    /// using drnamodb get item from Payments table
     const dynamodb = new awsSdk.DynamoDB()
     const params = {
       TableName: "Payments",
-
     };
     const result = await dynamodb.scan(params).promise();
     const finalResult = result ?
@@ -569,24 +566,37 @@ app.post('/simulatePayment', async (req, res) => {
         message: "Order not found"
       });
     }
-    if (finalResult) {
-      const findOrder = finalResult.find((item) => item.orderId === orderId);
-      if (!findOrder) {
-        return res.status(404).send({
-          message: "Order not found"
-        });
-      }
-      if (findOrder)
 
-        return res.status(200).send({
-          findOrder
-        });
-
+    const findOrder = finalResult.find((item) => item.orderId === orderId);
+    if (!findOrder) {
+      return res.status(404).send({
+        message: "Order not found"
+      });
     }
 
-  }
+    const LOIid = findOrder.LOIid;
+    const id = LOIid
+    const params2 = {
+      TableName: "LOI-hehdmsyuubfkbfai6tdtjjoxiq-staging",
+      Key: {
+        "id": { S: id }
+      }
+    };
+    const result2 = await dynamodb.getItem(params2).promise();
+    const finalResult2 = result2 ? AWS.DynamoDB.Converter.unmarshall(result2.Item) : [];
+    const loiData = finalResult2;
 
-})
+    return res.send({
+      message: "Payment is successful",
+      data: loiData
+    });
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).send({
+      message: "Internal Server Error"
+    });
+  }
+});
 
 app.post('/createPaymentOrder', createPaymentOrder)
 
