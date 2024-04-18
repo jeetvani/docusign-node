@@ -598,19 +598,19 @@ app.post('/simulatePayment', async (req, res) => {
 
     //getting financial info from FinancialInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging
 
-    const params4 = {
-      TableName: "FinancialInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging      ",
-      Key: {
-        "id": { S: finalResult3.companyinformationID }
-      }
+    // const params4 = {
+    //   TableName: "FinancialInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging      ",
+    //   Key: {
+    //     "id": { S: finalResult3.companyinformationID }
+    //   }
 
-    }
-    const result4 = await dynamodb.getItem(params4).promise()
-    const finalResult4 = result3 ? AWS.DynamoDB.Converter.unmarshall(result4.Item) : [];
+    // }
+    // const result4 = await dynamodb.getItem(params4).promise()
+    // const finalResult4 = result3 ? AWS.DynamoDB.Converter.unmarshall(result4.Item) : [];
 
     return res.send({
       message: "Payment is successful",
-      data: finalResult4
+      data: finalResult3
     });
   } catch (error) {
     console.error("Error:", error);
