@@ -595,9 +595,22 @@ app.post('/simulatePayment', async (req, res) => {
     };
     const result3 = await dynamodb.getItem(params3).promise();
     const finalResult3 = result3 ? AWS.DynamoDB.Converter.unmarshall(result3.Item) : [];
+
+    //getting financial info from FinancialInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging
+
+    const params4 = {
+      TableName: "FinancialInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging      ",
+      Key: {
+        "financialInformationCompanyInformationId": { S: finalResult3.companyinformationID }
+      }
+
+    }
+    const result4 = await dynamodb.getItem(params4).promise()
+    const finalResult4 = result3 ? AWS.DynamoDB.Converter.unmarshall(result4.Item) : [];
+
     return res.send({
       message: "Payment is successful",
-      data: finalResult3
+      data: finalResult4
     });
   } catch (error) {
     console.error("Error:", error);
