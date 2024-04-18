@@ -585,19 +585,12 @@ app.post('/simulatePayment', async (req, res) => {
     const result2 = await dynamodb.getItem(params2).promise();
     const finalResult2 = result2 ? AWS.DynamoDB.Converter.unmarshall(result2.Item) : [];
     const loiData = finalResult2;
-    const { fuelingVendorID } = loiData
-    // getting CompanyInformationId from
-    const params3 = {
-      TableName: "UserInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging",
-      Key: {
-        "id": { S: fuelingVendorID }
-      }
-    };
-    const result3 = await dynamodb.getItem(params3).promise();
-    const finalResult3 = result3 ? AWS.DynamoDB.Converter.unmarshall(result3.Item) : [];
+   
+    // getting CompanyInformationId from UserInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging
+   
     return res.send({
       message: "Payment is successful",
-      data: finalResult2
+      data: loiData
     });
   } catch (error) {
     console.error("Error:", error);
