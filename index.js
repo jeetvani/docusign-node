@@ -597,7 +597,7 @@ app.post('/simulatePayment', async (req, res) => {
     const finalResult3 = result3 ? AWS.DynamoDB.Converter.unmarshall(result3.Item) : [];
     return res.send({
       message: "Payment is successful",
-      data: finalResult3
+      data: finalResult2
     });
   } catch (error) {
     console.error("Error:", error);
