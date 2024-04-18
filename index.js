@@ -601,7 +601,7 @@ app.post('/simulatePayment', async (req, res) => {
     const params4 = {
       TableName: "FinancialInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging      ",
       Key: {
-        "financialInformationCompanyInformationId": { S: finalResult3.companyinformationID }
+        "id": { S: finalResult3.companyinformationID }
       }
 
     }
