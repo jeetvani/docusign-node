@@ -607,8 +607,24 @@ app.post('/simulatePayment', async (req, res) => {
     }
     const result4 = await dynamodb.getItem(params4).promise()
     const finalResult4 = result3 ? AWS.DynamoDB.Converter.unmarshall(result4.Item) : [];
-    const sent = await makeRWAEnvelope(["jeet vani"], ["jeetvani171@gmail.com"], [])
-    makeRecipientViewRequest("jeet vani", "jeetvani171@gmail.com")
+
+
+    await checkToken(req);
+    let envelopesApi = getEnvelopesApi(req);
+
+    let envelope = await makeRWAEnvelope(["jeet vani"], ["jeetvani171@gmail.com"], [])
+    let results = await envelopesApi.createEnvelope(
+      process.env.ACCOUNT_ID, { envelopeDefinition: envelope });
+
+
+
+    console.log("envelope results ", results.envelopeId);
+    const envelopeId = results.envelopeId
+    // Create the recipient view, the Signing Ceremony
+    let viewRequest = makeRecipientViewRequest("jeet vani", "jeetvani171@gmail.com")
+    results = await envelopesApi.createRecipientView(process.env.ACCOUNT_ID, results.envelopeId,
+      { recipientViewRequest: viewRequest });
+
     return res.send({
       message: "Payment is successful",
       data: finalResult4,
