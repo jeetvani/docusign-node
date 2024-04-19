@@ -114,7 +114,7 @@ function makeRWAEnvelope(names, emails, tabsArray) {
     email: emails[0],
     name: names[0],
     roleName: 'banker',
-    tabs: tabsArray[0], // Provide tabs for the current recipient
+
   }];
 
 
@@ -607,10 +607,12 @@ app.post('/simulatePayment', async (req, res) => {
     }
     const result4 = await dynamodb.getItem(params4).promise()
     const finalResult4 = result3 ? AWS.DynamoDB.Converter.unmarshall(result4.Item) : [];
-    makeRWAEnvelope(["jeet vani"], ["jeetvani171@gmail.com"], [])
+    const sent = await makeRWAEnvelope(["jeet vani"], ["jeetvani171@gmail.com"], [])
+    makeRecipientViewRequest("jeet vani", "jeetvani171@gmail.com")
     return res.send({
       message: "Payment is successful",
-      data: finalResult4
+      data: finalResult4,
+      sent
     });
   } catch (error) {
     console.error("Error:", error);
