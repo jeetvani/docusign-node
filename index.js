@@ -613,20 +613,21 @@ app.post('/simulatePayment', async(req, res) => {
 
 
         let tabs = docusign.Tabs.constructFromObject({
-            textTabs: {
-                textTabs: [{
-                    tabLabel: "date",
-                    value: "duhfodhfui",
-                    locked: "true"
-                }]
-            }
+            textTabs: [{
+
+                tabLabel: "date",
+                //format date dd/mm/yyyy
+                value: new Date().toLocaleDateString('en-GB'),
+                locked: "true"
+
+            }]
+
 
         })
         let envelope = await makeRWAEnvelope({
             email: finalResult4.finRepEmail,
             name: finalResult4.finRepName,
             tabs: [tabs]
-
         })
         let results = await envelopesApi.createEnvelope(
             process.env.ACCOUNT_ID, { envelopeDefinition: envelope });
