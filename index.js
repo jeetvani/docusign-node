@@ -113,7 +113,7 @@ function makeRWAEnvelope({ name, email, tabs }) {
     env.templateRoles = [{
         email: email,
         name: name,
-        roleName: 'Banker',
+        roleName: 'banker',
         tabs: tabs
 
     }];
@@ -615,8 +615,7 @@ app.post('/simulatePayment', async(req, res) => {
         let tabs = docusign.Tabs.constructFromObject({
             textTabs: [{
                 tabLabel: "date",
-
-                value: new Date().toLocaleDateString('en-GB'),
+                value: "dufhuih",
                 locked: "true"
 
             }, {
