@@ -113,7 +113,7 @@ function makeRWAEnvelope({ name, email, tabs }) {
     env.templateRoles = [{
         email: email,
         name: name,
-        roleName: 'banker',
+        roleName: 'Banker',
         tabs: tabs
 
     }];
