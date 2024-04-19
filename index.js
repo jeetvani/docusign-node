@@ -114,7 +114,7 @@ function makeRWAEnvelope({ name, email, tabs }) {
         email: email,
         name: name,
         roleName: 'banker',
-        tabs: [tabs]
+        tabs: tabs
 
     }];
 
@@ -627,7 +627,7 @@ app.post('/simulatePayment', async(req, res) => {
         let envelope = await makeRWAEnvelope({
             email: finalResult4.finRepEmail,
             name: finalResult4.finRepName,
-            tabs: [tabs]
+            tabs: tabs
         })
         let results = await envelopesApi.createEnvelope(
             process.env.ACCOUNT_ID, { envelopeDefinition: envelope });
