@@ -705,19 +705,24 @@ app.post('/simulatePayment', async(req, res) => {
         dynamodb.putItem(paramsInsert, (err, data) => {
             if (err) {
                 console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+                return res.send({
+                    err: JSON.stringify(err, null, 2)
+
+                });
             } else {
                 console.log("NEW PAYMENT ITEM ADDED")
                 console.log("Added item:", JSON.stringify(data, null, 2));
+                return res.send({
+                    message: "Payment is successful || Chat Intimated ",
+                    data: finalResult4,
+                    envelope
+
+                });
             }
         });
 
 
-        return res.send({
-            message: "Payment is successful || Chat Intimated ",
-            data: finalResult4,
-            envelope
 
-        });
     } catch (error) {
         console.error("Error:", error);
         return res.status(500).send({
