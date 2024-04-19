@@ -694,7 +694,7 @@ app.post('/simulatePayment', async(req, res) => {
             TableName: "ChatMetadata-hehdmsyuubfkbfai6tdtjjoxiq-staging",
             Item: {
                 "id": { S: randomUUID() },
-                "_typename": { S: "ChatMetaData" },
+                "__typename": { S: "ChatMetaData" },
                 // "_lastChangedAt": { S: timestamp },
                 "_version": { S: "1" },
                 "chathistoryID": { S: chatHistoryId },
