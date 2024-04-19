@@ -690,13 +690,14 @@ app.post('/simulatePayment', async(req, res) => {
             TableName: "ChatMetadata-hehdmsyuubfkbfai6tdtjjoxiq-staging",
             Item: {
                 "id": { S: randomUUID() },
-                "buyerID": { S: "buyer_id" },
-                "fuelingvendorID": { S: loiData.fuelingvendorID },
-                "amount": { S: JSON.stringify(loiData.price) },
-                "paid": { S: "0" },
-                "downPayment": { S: JSON.stringify(parseFloat(loiData.price) * 0.1) },
-                "orderId": { S: orderId },
-                "paymentLink": { S: "paymentLink" },
+                "_typeName": { S: "ChatMetaData" },
+                "_lastChangedAt": { S: new Date() },
+                "_version": { S: "1" },
+                "chathistoryID": { S: randomUUID() },
+                "createdAt": { S: new Date() },
+                "otherUserID": { S: orderId },
+                "updatedAt": { S: new Date() },
+                "userinformationID": { S: new Date() },
             }
         };
 
