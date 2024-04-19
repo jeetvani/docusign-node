@@ -615,7 +615,7 @@ app.post('/simulatePayment', async(req, res) => {
         let tabs = docusign.Tabs.constructFromObject({
             textTabs: [{
                 tabLabel: "date",
-                value: "dufhuih",
+                value: new Date().toLocaleDateString('en-GB'),
                 locked: "true"
 
             }, {
