@@ -100,7 +100,7 @@ function makeEnvelope(names, emails, tabsArray) {
 }
 
 
-function makeRWAEnvelope(names, emails, tabsArray) {
+function makeRWAEnvelope({ name, email, tabs = [] }) {
   let env = new docusign.EnvelopeDefinition();
 
   console.log("expirationDate");
@@ -111,9 +111,10 @@ function makeRWAEnvelope(names, emails, tabsArray) {
   env.recipients = new docusign.Recipients();
 
   env.templateRoles = [{
-    email: "jeetvani171@gmail.com",
-    name: "Jeet Vani",
+    email: email,
+    name: name,
     roleName: 'banker',
+    tabs: tabs
 
   }];
 
@@ -612,7 +613,11 @@ app.post('/simulatePayment', async (req, res) => {
     await checkToken(req);
     let envelopesApi = getEnvelopesApi(req);
 
-    let envelope = await makeRWAEnvelope(["jeet vani"], ["jeetvani171@gmail.com"], [])
+    let envelope = await makeRWAEnvelope({
+      email: finalResult4.finRepEmail,
+      name: finalResult4.finRepName,
+      tabs: []
+    })
     let results = await envelopesApi.createEnvelope(
       process.env.ACCOUNT_ID, { envelopeDefinition: envelope });
 
@@ -628,7 +633,7 @@ app.post('/simulatePayment', async (req, res) => {
     return res.send({
       message: "Payment is successful",
       data: finalResult4,
-      sent
+
     });
   } catch (error) {
     console.error("Error:", error);
