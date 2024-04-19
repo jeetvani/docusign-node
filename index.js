@@ -114,7 +114,7 @@ function makeRWAEnvelope({ name, email, tabs }) {
         email: email,
         name: name,
         roleName: 'banker',
-        tabs: tabs
+        tabs: [tabs]
 
     }];
 
