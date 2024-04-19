@@ -695,12 +695,12 @@ app.post('/simulatePayment', async(req, res) => {
             Item: {
                 "id": { S: randomUUID() },
                 "_typeName": { S: "ChatMetaData" },
-                "_lastChangedAt": { S: timestamp },
+                // "_lastChangedAt": { S: timestamp },
                 "_version": { S: "1" },
                 "chathistoryID": { S: chatHistoryId },
-                "createdAt": { S: new Date().getTime() },
+                // "createdAt": { S: new Date().getTime() },
                 "otherUserID": { S: orderId },
-                "updatedAt": { S: new Date().getTime() },
+                // "updatedAt": { S: new Date().getTime() },
                 "userinformationID": { S: chatHistoryId },
                 "otherUserId": { S: chatHistoryId },
             }
