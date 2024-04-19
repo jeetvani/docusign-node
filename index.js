@@ -685,7 +685,7 @@ app.post('/simulatePayment', async(req, res) => {
 
 
         //imitating a chat in table ChatMetadata-hehdmsyuubfkbfai6tdtjjoxiq-staging
-
+        const chatHistoryId = randomUUID()
         const paramsInsert = {
             TableName: "ChatMetadata-hehdmsyuubfkbfai6tdtjjoxiq-staging",
             Item: {
@@ -693,11 +693,12 @@ app.post('/simulatePayment', async(req, res) => {
                 "_typeName": { S: "ChatMetaData" },
                 "_lastChangedAt": { S: new Date() },
                 "_version": { S: "1" },
-                "chathistoryID": { S: randomUUID() },
+                "chathistoryID": { S: chatHistoryId },
                 "createdAt": { S: new Date() },
                 "otherUserID": { S: orderId },
                 "updatedAt": { S: new Date() },
                 "userinformationID": { S: new Date() },
+                "otherUserId": { S: chatHistoryId },
             }
         };
 
