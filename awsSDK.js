@@ -10,7 +10,7 @@ AWS.config.update({
     region: awsReactCred.region,
 
 })
-
+ 
 const awsSdk = AWS;
 
 module.exports = { awsSdk }
