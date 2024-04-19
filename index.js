@@ -686,33 +686,28 @@ app.post('/simulatePayment', async(req, res) => {
 
         //imitating a chat in table ChatMetadata-hehdmsyuubfkbfai6tdtjjoxiq-staging
 
-        const updateParams = {
-            TableName: " ChatMetadata-hehdmsyuubfkbfai6tdtjjoxiq-staging",
-            Key: {
-                "id": { S: randomUUID() }
-            },
-            //also set signedBy to buyer
-            UpdateExpression: "set #contractSent = :contractSent  , #signedBy = :signedBy , #envelopId = :envelopId,#envelopType = :envelopType ",
-            ExpressionAttributeNames: {
-                "#contractSent": "contractSent",
-                "#signedBy": "signedBy",
-                "#envelopId": "envelopId",
-                "#envelopType": "envelopType",
-
-
-
-            },
-            ExpressionAttributeValues: {
-                ":contractSent": { S: "true" }
-
-                ,
-                ":envelopId": { S: envelopeId },
-                ":envelopType": { S: "rwa" },
-                ":signedBy": { S: "0" }
-
+        const paramsInsert = {
+            TableName: "ChatMetadata-hehdmsyuubfkbfai6tdtjjoxiq-staging",
+            Item: {
+                "id": { S: randomUUID() },
+                "buyerID": { S: "buyer_id" },
+                "fuelingvendorID": { S: loiData.fuelingvendorID },
+                "amount": { S: JSON.stringify(loiData.price) },
+                "paid": { S: "0" },
+                "downPayment": { S: JSON.stringify(parseFloat(loiData.price) * 0.1) },
+                "orderId": { S: orderId },
+                "paymentLink": { S: "paymentLink" },
             }
         };
-        await dynamodb.updateItem(updateParams).promise();
+
+        dynamodb.putItem(paramsInsert, (err, data) => {
+            if (err) {
+                console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+            } else {
+                console.log("NEW PAYMENT ITEM ADDED")
+                console.log("Added item:", JSON.stringify(data, null, 2));
+            }
+        });
 
 
         return res.send({
