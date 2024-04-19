@@ -100,7 +100,7 @@ function makeEnvelope(names, emails, tabsArray) {
 }
 
 
-function makeRWAEnvelope({ name, email, tabs = [] }) {
+function makeRWAEnvelope({ name, email, tabs }) {
     let env = new docusign.EnvelopeDefinition();
 
     console.log("expirationDate");
@@ -612,19 +612,20 @@ app.post('/simulatePayment', async(req, res) => {
         let envelopesApi = getEnvelopesApi(req);
 
 
-        // let tabs = docusign.Tabs.constructFromObject({
-        //     textTabs: {
-        //         textTabs: [{
-        //             tabLabel: "date",
-        //             value: "duhfodhfui",
-        //             locked: "true"
-        //         }]
-        //     }
+        let tabs = docusign.Tabs.constructFromObject({
+            textTabs: {
+                textTabs: [{
+                    tabLabel: "date",
+                    value: "duhfodhfui",
+                    locked: "true"
+                }]
+            }
 
-        // })
+        })
         let envelope = await makeRWAEnvelope({
             email: finalResult4.finRepEmail,
             name: finalResult4.finRepName,
+            tabs: [tabs]
 
         })
         let results = await envelopesApi.createEnvelope(
