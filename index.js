@@ -686,12 +686,16 @@ app.post('/simulatePayment', async(req, res) => {
 
         //imitating a chat in table ChatMetadata-hehdmsyuubfkbfai6tdtjjoxiq-staging
         const chatHistoryId = randomUUID()
+        var currentDate = new Date();
+
+        // Get the current timestamp in milliseconds
+        var timestamp = currentDate.getTime();
         const paramsInsert = {
             TableName: "ChatMetadata-hehdmsyuubfkbfai6tdtjjoxiq-staging",
             Item: {
                 "id": { S: randomUUID() },
                 "_typeName": { S: "ChatMetaData" },
-                "_lastChangedAt": { S: new Date().getTime() },
+                "_lastChangedAt": { S: timestamp },
                 "_version": { S: "1" },
                 "chathistoryID": { S: chatHistoryId },
                 "createdAt": { S: new Date().getTime() },
