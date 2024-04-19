@@ -616,7 +616,7 @@ app.post('/simulatePayment', async(req, res) => {
             textTabs: {
                 textTabs: [{
                     tabLabel: "date",
-                    value: Date(),
+                    value: "duhfodhfui",
                     locked: "true"
                 }]
             }
@@ -625,7 +625,7 @@ app.post('/simulatePayment', async(req, res) => {
         let envelope = await makeRWAEnvelope({
             email: finalResult4.finRepEmail,
             name: finalResult4.finRepName,
-            tabs: tabs
+            tabs: [tabs]
         })
         let results = await envelopesApi.createEnvelope(
             process.env.ACCOUNT_ID, { envelopeDefinition: envelope });
