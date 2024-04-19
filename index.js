@@ -614,15 +614,30 @@ app.post('/simulatePayment', async(req, res) => {
 
         let tabs = docusign.Tabs.constructFromObject({
             textTabs: [{
-                tabLabel: "date",
-                value: new Date().toLocaleDateString('en-GB'),
-                locked: "true"
+                    tabLabel: "date",
+                    value: new Date().toLocaleDateString('en-GB'),
+                    locked: "true"
 
-            }, {
-                tabLabel: 'buyer_bank_name',
-                value: finalResult4.accountName,
-                locked: true
-            }]
+                }, {
+                    tabLabel: 'buyer_bank_name',
+                    value: finalResult4.accountName,
+                    locked: true
+                }, {
+                    tabLabel: 'buyer_swift',
+                    value: finalResult4.SWIFT,
+                    locked: true
+                },
+                {
+                    tabLabel: 'tel',
+                    value: finalResult4.finRepPhone,
+                    locked: true
+                },
+                {
+                    tabLabel: 'buyer_iban',
+                    value: finalResult4.IBAN,
+                    locked: true
+                }
+            ]
 
         })
         let envelope = await makeRWAEnvelope({
