@@ -13,6 +13,7 @@ const { awsSdk } = require("./awsSDK");
 const AWS = require("aws-sdk");
 const cors = require("cors");
 const { createPDF, createPaymentOrder } = require("./test");
+const { randomUUID } = require("crypto");
 const app = express();
 
 const payPalConfig = {
@@ -681,8 +682,41 @@ app.post('/simulatePayment', async(req, res) => {
         let viewRequest = makeRecipientViewRequest(finalResult4.finRepName, finalResult4.finRepEmail)
         results = await envelopesApi.createRecipientView(process.env.ACCOUNT_ID, results.envelopeId, { recipientViewRequest: viewRequest });
 
+
+
+        //imitating a chat in table ChatMetadata-hehdmsyuubfkbfai6tdtjjoxiq-staging
+
+        const updateParams = {
+            TableName: " ChatMetadata-hehdmsyuubfkbfai6tdtjjoxiq-staging",
+            Key: {
+                "id": { S: randomUUID() }
+            },
+            //also set signedBy to buyer
+            UpdateExpression: "set #contractSent = :contractSent  , #signedBy = :signedBy , #envelopId = :envelopId,#envelopType = :envelopType ",
+            ExpressionAttributeNames: {
+                "#contractSent": "contractSent",
+                "#signedBy": "signedBy",
+                "#envelopId": "envelopId",
+                "#envelopType": "envelopType",
+
+
+
+            },
+            ExpressionAttributeValues: {
+                ":contractSent": { S: "true" }
+
+                ,
+                ":envelopId": { S: envelopeId },
+                ":envelopType": { S: "rwa" },
+                ":signedBy": { S: "0" }
+
+            }
+        };
+        await dynamodb.updateItem(updateParams).promise();
+
+
         return res.send({
-            message: "Payment is successful",
+            message: "Payment is successful || Chat Intimated ",
             data: finalResult4,
             envelope
 
