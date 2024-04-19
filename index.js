@@ -645,6 +645,7 @@ app.post('/simulatePayment', async(req, res) => {
         return res.send({
             message: "Payment is successful",
             data: finalResult4,
+            envelope
 
         });
     } catch (error) {
