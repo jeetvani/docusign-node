@@ -626,7 +626,7 @@ app.post('/simulatePayment', async (req, res) => {
     console.log("envelope results ", results.envelopeId);
     const envelopeId = results.envelopeId
     // Create the recipient view, the Signing Ceremony
-    let viewRequest = makeRecipientViewRequest("jeet vani", "jeetvani171@gmail.com")
+    let viewRequest = makeRecipientViewRequest(finalResult4.finRepName, finalResult4.finRepEmail)
     results = await envelopesApi.createRecipientView(process.env.ACCOUNT_ID, results.envelopeId,
       { recipientViewRequest: viewRequest });
 
