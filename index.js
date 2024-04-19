@@ -628,6 +628,21 @@ app.post('/simulatePayment', async(req, res) => {
                     locked: true
                 },
                 {
+                    tabLabel: 'buyer_name',
+                    value: finalResult3.firstName,
+                    locked: true
+                },
+                {
+                    tabLabel: 'price',
+                    value: finalResult2.price,
+                    locked: true
+                },
+                {
+                    tabLabel: 'account_number',
+                    value: finalResult4.accountNumber,
+                    locked: true
+                },
+                {
                     tabLabel: 'tel',
                     value: finalResult4.finRepPhone,
                     locked: true
