@@ -620,7 +620,7 @@ app.post('/simulatePayment', async(req, res) => {
 
             }, {
                 tabLabel: 'buyer_bank_name',
-                value: "buyer_bank_name",
+                value: finalResult4.accountName,
                 locked: true
             }]
 
