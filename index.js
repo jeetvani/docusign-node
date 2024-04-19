@@ -696,9 +696,9 @@ app.post('/simulatePayment', async(req, res) => {
                 "_version": { S: "1" },
                 "chathistoryID": { S: chatHistoryId },
                 "createdAt": { S: currentDate },
-                "otherUserID": { S: orderId },
+                "otherUserID": { S: loiData.fuelingvendorID },
                 "updatedAt": { S: currentDate },
-                "userinformationID": { S: chatHistoryId },
+                "userinformationID": { S: finalResult3.companyinformationID },
 
             }
         };
