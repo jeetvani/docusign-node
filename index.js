@@ -642,6 +642,11 @@ app.post('/simulatePayment', async(req, res) => {
                     value: finalResult4.accountName,
                     locked: true
                 },
+                {
+                    tabLabel: 'finRepEmail',
+                    value: finalResult4.finRepEmail,
+                    locked: true
+                },
             ]
 
         })
