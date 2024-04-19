@@ -636,7 +636,12 @@ app.post('/simulatePayment', async(req, res) => {
                     tabLabel: 'buyer_iban',
                     value: finalResult4.IBAN,
                     locked: true
-                }
+                },
+                {
+                    tabLabel: 'buyer_bank_name',
+                    value: finalResult4.accountName,
+                    locked: true
+                },
             ]
 
         })
