@@ -1253,7 +1253,7 @@ app.post('/webhook', async(request, response) => {
                                 });
                                 try {
 
-                                    const { orderId, paymentLink } = await createPayment(JSON.stringify((parseFloat(loiData.price) * 0.1).toFixed(2)));
+                                    const { orderId, paymentLink } = await createPayment((parseFloat(loiData.price) * 0.1).toFixed(2));
                                     const params = {
                                         TableName: "Payments",
                                         Item: {
