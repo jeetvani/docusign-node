@@ -3,6 +3,7 @@ const path = require("path");
 const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
 dotenv.config();
+console.log("")
 
 const RWA_TEMPLATE_ID = "024ab86d-f47c-435a-bfd6-82852d09f8d9"
 const paypal = require('@paypal/checkout-server-sdk');
