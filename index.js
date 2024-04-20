@@ -829,6 +829,61 @@ app.post('/webhook', async(request, response) => {
         const envelopeId = request.body.data.envelopeId;
         //find in pendingICPO table using envelopeId
         const dynamodb = new awsSdk.DynamoDB()
+
+
+        //!RWA_______________________________FINDING_____________ALGOOOOO
+
+        const paramsToFindRWA = {
+            TableName: "RWA",
+            FilterExpression: "#envelopeId = :envelopeId",
+            ExpressionAttributeNames: {
+                "#envelopeId": "envelopeId"
+            },
+            ExpressionAttributeValues: {
+                ":envelopeId": { S: envelopeId }
+            }
+        };
+        await dynamodb.scan(paramsToFindRWA, (err, data) => {
+            if (err) {
+                console.error("Unable to scan the table. Error JSON:", JSON.stringify(err, null, 2));
+            } else {
+                console.log("Scan succeeded.");
+                console.log(data);
+                const finalResult = data ? data.Items.map((item) => { return AWS.DynamoDB.Converter.unmarshall(item) }) : [];
+                console.log(finalResult);
+                if (finalResult.length > 0) {
+                    const updateParams = {
+                        TableName: "RWA",
+                        Key: {
+                            "envelopeId": { S: envelopeId }
+                        },
+                        //also set signedBy to buyer
+                        UpdateExpression: "set #signedBy = :signedBy",
+                        ExpressionAttributeNames: {
+                            "#signedBy": "signedBy"
+                        },
+
+                        //increase the signedBy value by 1
+                        ExpressionAttributeValues: {
+                            ":signedBy": {
+                                S: "SIGNER"
+                            }
+                        }
+                    };
+                    const updateIt = dynamodb.updateItem(updateParams, (err, data) => {
+                        if (err) {
+                            console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
+                        } else {
+                            console.log("UpdateItem succeeded:", data);
+                        }
+                    });
+
+                }
+            }
+        })
+
+        //!RWA_______________________________FINDING_____________ALGOOOOO
+
         const params = {
             TableName: "PendingICPO",
             FilterExpression: "#envelopId = :envelopId",
