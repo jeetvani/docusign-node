@@ -20,7 +20,7 @@ const createPayment = (amount) => {
                 "payment_method": "paypal"
             },
             "redirect_urls": {
-                "return_url": "http://example.com/success",
+                "return_url": "https://docusign-node.onrender.com/simulatePayment",
                 "cancel_url": "http://example.com/cancel"
             },
             "transactions": [{

@@ -817,6 +817,277 @@ app.post('/simulatePayment', async(req, res) => {
     }
 });
 
+app.get('/simulatePayment', async(req, res) => {
+    try {
+        const { paymentId: orderId } = req.query;
+        if (!orderId) {
+            return res.status(400).send({
+                message: "orderId is required"
+            });
+        }
+
+        const dynamodb = new awsSdk.DynamoDB()
+        const params = {
+            TableName: "Payments",
+        };
+        const result = await dynamodb.scan(params).promise();
+        const finalResult = result ?
+            result.Items.map((item) => { return AWS.DynamoDB.Converter.unmarshall(item) }) : [];
+
+        if (!finalResult) {
+            return res.status(404).send({
+                message: "Order not found"
+            });
+        }
+
+        const findOrder = finalResult.find((item) => item.orderId === orderId);
+        if (!findOrder) {
+            return res.status(404).send({
+                message: "Order not found"
+            });
+        }
+
+        const LOIid = findOrder.LOIid;
+        const id = LOIid
+        const params2 = {
+            TableName: "LOI-hehdmsyuubfkbfai6tdtjjoxiq-staging",
+            Key: {
+                "id": { S: id }
+            }
+        };
+        const result2 = await dynamodb.getItem(params2).promise();
+        const finalResult2 = result2 ? AWS.DynamoDB.Converter.unmarshall(result2.Item) : [];
+        const loiData = finalResult2;
+
+        // getting CompanyInformationId from UserInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging
+        const params3 = {
+            TableName: "UserInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging",
+            Key: {
+                "id": { S: loiData.fuelingvendorID }
+            }
+        };
+        const result3 = await dynamodb.getItem(params3).promise();
+        const finalResult3 = result3 ? AWS.DynamoDB.Converter.unmarshall(result3.Item) : [];
+
+        //getting financial info from FinancialInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging
+
+        const params4 = {
+            TableName: "FinancialInformation-hehdmsyuubfkbfai6tdtjjoxiq-staging",
+            Key: {
+                "id": { S: finalResult3.companyinformationID }
+            }
+
+        }
+        const result4 = await dynamodb.getItem(params4).promise()
+        const finalResult4 = result3 ? AWS.DynamoDB.Converter.unmarshall(result4.Item) : [];
+
+
+        await checkToken(req);
+        let envelopesApi = getEnvelopesApi(req);
+
+
+        let tabs = docusign.Tabs.constructFromObject({
+            textTabs: [{
+                    tabLabel: "date",
+                    value: new Date().toLocaleDateString('en-GB'),
+                    locked: "true"
+
+                }, {
+                    tabLabel: 'buyer_bank_name',
+                    value: finalResult4.accountName,
+                    locked: true
+                }, {
+                    tabLabel: 'buyer_swift',
+                    value: finalResult4.SWIFT,
+                    locked: true
+                },
+                {
+                    tabLabel: 'buyer_name',
+                    value: finalResult3.firstName,
+                    locked: true
+                },
+                {
+                    tabLabel: 'price',
+                    value: finalResult2.price,
+                    locked: true
+                },
+                {
+                    tabLabel: 'account_number',
+                    value: finalResult4.accountNumber,
+                    locked: true
+                },
+                {
+                    tabLabel: 'tel',
+                    value: finalResult4.finRepPhone,
+                    locked: true
+                },
+                {
+                    tabLabel: 'buyer_iban',
+                    value: finalResult4.IBAN,
+                    locked: true
+                },
+                {
+                    tabLabel: 'buyer_bank_name',
+                    value: finalResult4.accountName,
+                    locked: true
+                },
+                {
+                    tabLabel: 'finRepEmail',
+                    value: finalResult4.finRepEmail,
+                    locked: true
+                },
+            ]
+
+        })
+        let envelope = await makeRWAEnvelope({
+            email: finalResult4.finRepEmail,
+            name: finalResult4.finRepName,
+            tabs: tabs
+        })
+        let results = await envelopesApi.createEnvelope(
+            process.env.ACCOUNT_ID, { envelopeDefinition: envelope });
+
+
+
+        console.log("envelope results ", results.envelopeId);
+        const envelopeId = results.envelopeId
+        const rwaParams = {
+            TableName: "RWA",
+            Item: {
+                "envelopeId": { S: envelopeId },
+                "loiId": { S: loiData.id },
+
+
+
+            }
+        };
+
+        dynamodb.putItem(rwaParams, (err, data) => {
+            if (err) {
+                console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+                return res.send({
+                    err: JSON.stringify(err, null, 2)
+
+                });
+            } else {
+                console.log("NEW PAYMENT ITEM ADDED")
+                console.log("Added item:", JSON.stringify(data, null, 2));
+
+            }
+        });
+        // Create the recipient view, the Signing Ceremony
+        let viewRequest = makeRecipientViewRequest(finalResult4.finRepName, finalResult4.finRepEmail)
+        results = await envelopesApi.createRecipientView(process.env.ACCOUNT_ID, results.envelopeId, { recipientViewRequest: viewRequest });
+
+
+
+        //imitating a chat in table ChatMetadata-hehdmsyuubfkbfai6tdtjjoxiq-staging
+        const chatHistoryId = randomUUID()
+        const currentDate = new Date().toISOString();
+        const paramsInsert = {
+            TableName: "ChatMetadata-hehdmsyuubfkbfai6tdtjjoxiq-staging",
+            Item: {
+                "id": { S: randomUUID() },
+                "__typename": { S: "ChatMetaData" },
+                "_lastChangedAt": { S: currentDate },
+                "_version": { S: "1" },
+                "chathistoryID": { S: chatHistoryId },
+                "createdAt": { S: currentDate },
+                "otherUserID": { S: loiData.fuelingvendorID },
+                "updatedAt": { S: currentDate },
+                "userinformationID": { S: loiData.buyerID },
+
+            }
+        };
+
+        dynamodb.putItem(paramsInsert, (err, data) => {
+            if (err) {
+                console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+                return res.send({
+                    err: JSON.stringify(err, null, 2)
+
+                });
+            } else {
+                console.log("NEW PAYMENT ITEM ADDED")
+                console.log("Added item:", JSON.stringify(data, null, 2));
+
+            }
+        });
+        const paramsInsert2 = {
+            TableName: "ChatMetadata-hehdmsyuubfkbfai6tdtjjoxiq-staging",
+            Item: {
+                "id": { S: randomUUID() },
+                "__typename": { S: "ChatMetaData" },
+                "_lastChangedAt": { S: currentDate },
+                "_version": { S: "1" },
+                "chathistoryID": { S: chatHistoryId },
+                "createdAt": { S: currentDate },
+                "otherUserID": { S: loiData.buyerID },
+                "updatedAt": { S: currentDate },
+                "userinformationID": { S: loiData.fuelingvendorID },
+
+            }
+        };
+
+        dynamodb.putItem(paramsInsert2, (err, data) => {
+            if (err) {
+                console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+                return res.send({
+                    err: JSON.stringify(err, null, 2)
+
+                });
+            } else {
+                console.log("NEW PAYMENT ITEM ADDED")
+                console.log("Added item:", JSON.stringify(data, null, 2));
+
+            }
+        });
+        const paramsInsert3 = {
+            TableName: "ChatHistory-hehdmsyuubfkbfai6tdtjjoxiq-staging",
+            Item: {
+                "id": { S: chatHistoryId },
+                "__typename": { S: "ChatHistory" },
+                "_lastChangedAt": { S: currentDate },
+                "_version": { S: "1" },
+
+                "createdAt": { S: currentDate },
+                "otherUserID": { S: loiData.buyerID },
+                "updatedAt": { S: currentDate },
+                "userinformationID": { S: loiData.fuelingvendorID },
+
+            }
+        };
+
+        dynamodb.putItem(paramsInsert3, (err, data) => {
+            if (err) {
+                console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+                return res.send({
+                    err: JSON.stringify(err, null, 2)
+
+                });
+            } else {
+                console.log("NEW PAYMENT ITEM ADDED")
+                console.log("Added item:", JSON.stringify(data, null, 2));
+                return res.send({
+                    message: "Payment is successful || Chat Intimated ",
+                    data: finalResult4,
+                    envelope
+
+                });
+            }
+        });
+
+
+
+    } catch (error) {
+        console.error("Error:", error);
+        return res.status(500).send({
+            message: "Internal Server Error"
+        });
+    }
+});
+
+
 app.post('/createPaymentOrder', createPaymentOrder)
 
 app.post('/webhook', async(request, response) => {
@@ -982,7 +1253,7 @@ app.post('/webhook', async(request, response) => {
                                 });
                                 try {
 
-                                    const { orderId, paymentLink } = await createPayment("10.00");
+                                    const { orderId, paymentLink } = await createPayment(JSON.stringify((parseFloat(loiData.price) * 0.1).toFixed(2)));
                                     const params = {
                                         TableName: "Payments",
                                         Item: {
