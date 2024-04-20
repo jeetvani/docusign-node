@@ -742,6 +742,35 @@ app.post('/simulatePayment', async(req, res) => {
             } else {
                 console.log("NEW PAYMENT ITEM ADDED")
                 console.log("Added item:", JSON.stringify(data, null, 2));
+
+            }
+        });
+        const paramsInsert3 = {
+            TableName: "ChatHistory-hehdmsyuubfkbfai6tdtjjoxiq-staging",
+            Item: {
+                "id": { S: chatHistoryId },
+                "__typename": { S: "ChatHistory" },
+                "_lastChangedAt": { S: currentDate },
+                "_version": { S: "1" },
+
+                "createdAt": { S: currentDate },
+                "otherUserID": { S: loiData.buyerID },
+                "updatedAt": { S: currentDate },
+                "userinformationID": { S: loiData.fuelingvendorID },
+
+            }
+        };
+
+        dynamodb.putItem(paramsInsert3, (err, data) => {
+            if (err) {
+                console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+                return res.send({
+                    err: JSON.stringify(err, null, 2)
+
+                });
+            } else {
+                console.log("NEW PAYMENT ITEM ADDED")
+                console.log("Added item:", JSON.stringify(data, null, 2));
                 return res.send({
                     message: "Payment is successful || Chat Intimated ",
                     data: finalResult4,
