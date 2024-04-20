@@ -15,6 +15,7 @@ const AWS = require("aws-sdk");
 const cors = require("cors");
 const { createPDF, createPaymentOrder } = require("./test");
 const { randomUUID } = require("crypto");
+const { createPayment } = require("./paypalModule");
 const app = express();
 
 const payPalConfig = {
@@ -980,7 +981,7 @@ app.post('/webhook', async(request, response) => {
                                     }
                                 });
                                 try {
-                                    const response = await client.execute(request);
+
                                     const { orderId, paymentLink } = await createPayment("10.00");
                                     const params = {
                                         TableName: "Payments",
@@ -1006,7 +1007,7 @@ app.post('/webhook', async(request, response) => {
                                     });
                                 } catch (err) {
                                     console.error('Error creating order:', err);
-                                    res.status(500).json({ error: 'Failed to create order' });
+                                    response.status(500).json({ error: 'Failed to create order' });
                                 }
                                 //! Create a new order IN PAYPAL
 
