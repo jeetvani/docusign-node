@@ -682,14 +682,7 @@ app.post('/simulatePayment', async(req, res) => {
             TableName: "RWA",
             Item: {
                 "envelopeId": { S: envelopeId },
-                "__typename": { S: "RWA" },
-                "_lastChangedAt": { S: currentDate },
-                "_version": { S: "1" },
-                "chathistoryID": { S: chatHistoryId },
-                "createdAt": { S: currentDate },
-                "otherUserID": { S: loiData.fuelingvendorID },
-                "updatedAt": { S: currentDate },
-                "userinformationID": { S: loiData.buyerID },
+
 
             }
         };
