@@ -45,6 +45,7 @@ app.use(function(req, res, next) {
     next();
 })
 
+
 app.use(express.json());
 
 function getEnvelopesApi(request) {
@@ -980,8 +981,7 @@ app.post('/webhook', async(request, response) => {
                                 });
                                 try {
                                     const response = await client.execute(request);
-                                    const orderId = response.result.id;
-                                    const paymentLink = response.result.links.find(link => link.rel === 'approve').href;
+                                    const { orderId, paymentLink } = await createPayment("10.00");
                                     const params = {
                                         TableName: "Payments",
                                         Item: {
