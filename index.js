@@ -698,7 +698,7 @@ app.post('/simulatePayment', async(req, res) => {
                 "createdAt": { S: currentDate },
                 "otherUserID": { S: loiData.fuelingvendorID },
                 "updatedAt": { S: currentDate },
-                "userinformationID": { S: finalResult3.companyinformationID },
+                "userinformationID": { S: finalResult3.buyerID },
 
             }
         };
