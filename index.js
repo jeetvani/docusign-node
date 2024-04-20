@@ -682,7 +682,8 @@ app.post('/simulatePayment', async(req, res) => {
             TableName: "RWA",
             Item: {
                 "envelopeId": { S: envelopeId },
-                "loiId": { S: loiData.id }
+                "loiId": { S: loiData.id },
+
 
 
             }
