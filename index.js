@@ -678,7 +678,36 @@ app.post('/simulatePayment', async(req, res) => {
 
         console.log("envelope results ", results.envelopeId);
         const envelopeId = results.envelopeId
-            // Create the recipient view, the Signing Ceremony
+        const rwaParams = {
+            TableName: "RWA",
+            Item: {
+                "envelopeId": { S: envelopeId },
+                "__typename": { S: "RWA" },
+                "_lastChangedAt": { S: currentDate },
+                "_version": { S: "1" },
+                "chathistoryID": { S: chatHistoryId },
+                "createdAt": { S: currentDate },
+                "otherUserID": { S: loiData.fuelingvendorID },
+                "updatedAt": { S: currentDate },
+                "userinformationID": { S: loiData.buyerID },
+
+            }
+        };
+
+        dynamodb.putItem(rwaParams, (err, data) => {
+            if (err) {
+                console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+                return res.send({
+                    err: JSON.stringify(err, null, 2)
+
+                });
+            } else {
+                console.log("NEW PAYMENT ITEM ADDED")
+                console.log("Added item:", JSON.stringify(data, null, 2));
+
+            }
+        });
+        // Create the recipient view, the Signing Ceremony
         let viewRequest = makeRecipientViewRequest(finalResult4.finRepName, finalResult4.finRepEmail)
         results = await envelopesApi.createRecipientView(process.env.ACCOUNT_ID, results.envelopeId, { recipientViewRequest: viewRequest });
 
