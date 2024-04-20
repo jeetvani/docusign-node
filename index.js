@@ -713,12 +713,7 @@ app.post('/simulatePayment', async(req, res) => {
             } else {
                 console.log("NEW PAYMENT ITEM ADDED")
                 console.log("Added item:", JSON.stringify(data, null, 2));
-                return res.send({
-                    message: "Payment is successful || Chat Intimated ",
-                    data: finalResult4,
-                    envelope
 
-                });
             }
         });
         const paramsInsert2 = {
