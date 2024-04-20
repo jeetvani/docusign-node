@@ -828,7 +828,10 @@ app.post('/webhook', async(request, response) => {
                                     purchase_units: [{
                                         amount: {
                                             currency_code: 'USD',
-                                            value: (parseFloat(loiData.price).toFixed(2)) * 0.1
+                                            value:
+                                            //f the currency supports decimals, only two decimal place precision is supported.
+
+                                                ((parseFloat(loiData.price).toFixed(2)) * 0.1).toFixed(1)
                                         }
                                     }]
                                 });
