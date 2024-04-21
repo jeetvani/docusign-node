@@ -1088,21 +1088,20 @@ app.get('/simulatePayment', async(req, res) => {
                         console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
                     } else {
                         console.log("UpdateItem succeeded:", data);
-                        return res.send(
-                            `
-                            <html>
-                            <body>
-                            <h1>Payment is successful</h1>
-                            </body>
-                            </html>
-                            `
-                        );
                     }
                 })
 
 
 
-
+                return res.send(
+                    `
+                    <html>
+                    <body>
+                    <h1>Payment is successful</h1>
+                    </body>
+                    </html>
+                    `
+                );
             }
         });
 
