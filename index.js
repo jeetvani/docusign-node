@@ -1068,15 +1068,41 @@ app.get('/simulatePayment', async(req, res) => {
             } else {
                 console.log("NEW PAYMENT ITEM ADDED")
                 console.log("Added item:", JSON.stringify(data, null, 2));
-                return res.send(
-                    `
-                    <html>
-                    <body>
-                    <h1>Payment is successful</h1>
-                    </body>
-                    </html>
-                    `
-                );
+
+                //update the payments table with orderId paid=1
+                const updateParams = {
+                    TableName: "Payments",
+                    Key: {
+                        "orderId": { S: orderId }
+                    },
+                    UpdateExpression: "set #paid = :paid",
+                    ExpressionAttributeNames: {
+                        "#paid": "paid"
+                    },
+                    ExpressionAttributeValues: {
+                        ":paid": { S: "1" }
+                    }
+                };
+                dynamodb.updateItem(updateParams, (err, data) => {
+                    if (err) {
+                        console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
+                    } else {
+                        console.log("UpdateItem succeeded:", data);
+                        return res.send(
+                            `
+                            <html>
+                            <body>
+                            <h1>Payment is successful</h1>
+                            </body>
+                            </html>
+                            `
+                        );
+                    }
+                })
+
+
+
+
             }
         });
 
