@@ -1068,12 +1068,15 @@ app.get('/simulatePayment', async(req, res) => {
             } else {
                 console.log("NEW PAYMENT ITEM ADDED")
                 console.log("Added item:", JSON.stringify(data, null, 2));
-                return res.send({
-                    message: "Payment is successful || Chat Intimated ",
-                    data: finalResult4,
-                    envelope
-
-                });
+                return res.send(
+                    `
+                    <html>
+                    <body>
+                    <h1>Payment is successful</h1>
+                    </body>
+                    </html>
+                    `
+                );
             }
         });
 
