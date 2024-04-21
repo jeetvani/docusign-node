@@ -1294,9 +1294,10 @@ app.post('/webhook', async(request, response) => {
             }
         });
 
-        return response.send("Webhook was called  for recipient_completed event");
+
     }
-    response.send("webhook called");
+
+    return response.send("Webhook was called  for recipient_completed event");
 
 });
 
