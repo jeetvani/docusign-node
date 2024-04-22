@@ -172,13 +172,27 @@ app.get("/success", (request, resposne) => {
 
 
 app.post('/initiateSignature', async(request, response) => {
-    const { LOIid } = request.body;
+    const { LOIid, surveyorEmail } = request.body;
     console.log("LOIid", LOIid);
     try {
         if (!LOIid) {
             response.send("LOIid is required");
             return
         }
+        if (!surveyorEmail) {
+            response.send("surveyorEmail is required");
+            return
+        }
+        if (surveyorEmail.length < 1) {
+            response.send("surveyorEmail is required");
+            return
+        }
+        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+        if (!emailRegex.test(surveyorEmail)) {
+            response.send("Invalid email");
+            return
+        }
+
 
         const dynamodb = new awsSdk.DynamoDB()
             //get table  PendingICPO table
@@ -454,12 +468,13 @@ app.post('/initiateSignature', async(request, response) => {
                         "LOIid": { S: LOIid }
                     },
                     //also set signedBy to buyer
-                    UpdateExpression: "set #contractSent = :contractSent  , #signedBy = :signedBy , #envelopId = :envelopId,#envelopType = :envelopType ",
+                    UpdateExpression: "set #contractSent = :contractSent  , #signedBy = :signedBy , #envelopId = :envelopId,#envelopType = :envelopType , #surveyorEmail = :surveyorEmail",
                     ExpressionAttributeNames: {
                         "#contractSent": "contractSent",
                         "#signedBy": "signedBy",
                         "#envelopId": "envelopId",
                         "#envelopType": "envelopType",
+                        "#surveyorEmail": "surveyorEmail"
 
 
 
@@ -470,7 +485,8 @@ app.post('/initiateSignature', async(request, response) => {
                         ,
                         ":envelopId": { S: envelopeId },
                         ":envelopType": { S: "contract" },
-                        ":signedBy": { S: "0" }
+                        ":signedBy": { S: "0" },
+                        ":surveyorEmail": { S: surveyorEmail }
 
                     }
                 };
