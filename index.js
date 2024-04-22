@@ -176,20 +176,28 @@ app.post('/initiateSignature', async(request, response) => {
     console.log("LOIid", LOIid);
     try {
         if (!LOIid) {
-            response.send("LOIid is required");
+            response.send({
+                message: "LOIid is required"
+            });
             return
         }
         if (!surveyorEmail) {
-            response.send("surveyorEmail is required");
+            response.send({
+                message: "surveyorEmail is required"
+            });
             return
         }
         if (surveyorEmail.length < 1) {
-            response.send("surveyorEmail is required");
+            response.send({
+                message: "surveyorEmail is required"
+            });
             return
         }
         const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
         if (!emailRegex.test(surveyorEmail)) {
-            response.send("Invalid email");
+            response.send({
+                message: "Invalid email"
+            });
             return
         }
 
