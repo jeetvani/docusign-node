@@ -6,6 +6,7 @@ dotenv.config();
 console.log("")
 
 const RWA_TEMPLATE_ID = "024ab86d-f47c-435a-bfd6-82852d09f8d9"
+const QNQ_TEMPLATE_ID = "1521d146-cde7-4220-9b2d-331b80d84c08"
 const paypal = require('@paypal/checkout-server-sdk');
 const docusign = require("docusign-esign");
 const fs = require("fs");
@@ -126,6 +127,25 @@ function makeRWAEnvelope({ name, email, tabs }) {
     env.status = "sent";
 
     return env;
+}
+
+function makeQnQEnvelope({ name, email, tabs }) {
+    let env = new docusign.EnvelopeDefinition();
+
+    console.log("expirationDate");
+    console.log(env.expireAfter);
+    console.log("expirationDate");
+    env.emailSubject = "QnQ Contract";
+    env.templateId = QNQ_TEMPLATE_ID;
+    env.recipients = new docusign.Recipients();
+
+    env.templateRoles = [{
+        email: email,
+        name: name,
+        roleName: 'surveyor',
+        tabs: tabs
+
+    }];
 }
 
 function makeRecipientViewRequest(name, email) {
@@ -1201,6 +1221,50 @@ app.post('/webhook', async(request, response) => {
                             console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
                         } else {
                             console.log("UpdateItem succeeded:", data);
+                            const loiid = finalResult[0].loiId;
+                            //from PendingICPO table get surveyorEmail using loiid
+                            const paramsToFindSurveyorEmail = {
+                                TableName: "PendingICPO",
+                                Key: {
+                                    "LOIid": { S: loiid }
+                                }
+                            };
+                            dynamodb.getItem(paramsToFindSurveyorEmail, async(err, data) => {
+                                if (err) {
+                                    console.error("Unable to get item. Error JSON:", JSON.stringify(err, null, 2));
+                                } else {
+                                    console.log("GetItem succeeded:", data);
+                                    const surveyorEmail = data ? AWS.DynamoDB.Converter.unmarshall(data.Item).surveyorEmail : [];
+                                    console.log("surveyorEmail", surveyorEmail);
+                                    //send email to surveyor
+                                    let envelope = await makeQnQEnvelope({
+                                        name: "Surveyor",
+                                        email: surveyorEmail,
+                                        tabs: []
+                                    })
+                                    let results = await envelopesApi.createEnvelope(
+                                        process.env.ACCOUNT_ID, { envelopeDefinition: envelope });
+                                    console.log("envelope results ", results.envelopeId);
+                                    const envelopeId = results.envelopeId
+                                    const qnqParams = {
+                                        TableName: "QnQ",
+                                        Item: {
+                                            "envelopeId": { S: envelopeId },
+                                            "loiId": { S: loiid },
+                                        }
+                                    };
+                                    dynamodb.putItem(qnqParams, (err, data) => {
+                                        if (err) {
+                                            console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+                                        } else {
+                                            console.log("NEW PAYMENT ITEM ADDED")
+                                            console.log("Added item:", JSON.stringify(data, null, 2));
+                                        }
+                                    });
+
+                                }
+                            })
+
                         }
                     });
 
