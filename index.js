@@ -142,7 +142,7 @@ function makeQnQEnvelope({ name, email, tabs }) {
     env.templateRoles = [{
         email: email,
         name: name,
-        roleName: 'surveyor',
+        roleName: 'qnq',
         tabs: tabs
 
     }];
@@ -1238,7 +1238,7 @@ app.post('/webhook', async(request, response) => {
                                     console.log("surveyorEmail", surveyorEmail);
                                     //send email to surveyor
                                     let envelope = await makeQnQEnvelope({
-                                        name: "Surveyor",
+                                        name: "qnq",
                                         email: surveyorEmail,
                                         tabs: []
                                     })
