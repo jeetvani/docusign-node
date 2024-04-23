@@ -1237,6 +1237,7 @@ app.post('/webhook', async(request, response) => {
                                     const surveyorEmail = data ? AWS.DynamoDB.Converter.unmarshall(data.Item).surveyorEmail : [];
                                     console.log("surveyorEmail", surveyorEmail);
                                     //send email to surveyor
+                                    let envelopesApi = getEnvelopesApi(request);
                                     let envelope = await makeQnQEnvelope({
                                         name: "qnq",
                                         email: surveyorEmail,
